@@ -582,9 +582,7 @@ const routes = {
     }
   });
 }
-  return {
-  configure,
-  request,
+return { configure, request,
   login,
   verifyEmail,
   download,
@@ -599,3 +597,4 @@ const routes = {
     )
   )
 };
+})();
