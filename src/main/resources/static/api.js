@@ -555,10 +555,24 @@ const routes = {
     if ((response.headers.get('Content-Type') || '').includes('json')) return JSON.parse(text);
     return text;
   }
-  async function login(username, password) {
+  function requireEmail(value) {
+    const email = typeof value === 'string' ? value.trim() : '';
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      throw new Error('กรุณากรอกอีเมลให้ถูกต้อง');
+    }
+    return email;
+  }
+  async function requestPasswordReset(email) {
+    return request('LoginController.forgotPassword', {
+      method: 'POST', auth: false, body: {email: requireEmail(email)}
+    });
+  }
+  async function login(email, password) {
     const version = ++loginVersion;
     token = null;
-    const result = await request('LoginController.login', {auth:false, body:{username,password}});
+    email = requireEmail(email);
+    // LoginRequest currently names its identifier username; its value is the email.
+    const result = await request('LoginController.login', {auth:false, body:{username:email,password}});
     if (version !== loginVersion) throw new Error('Login request cancelled');
     if (typeof result?.token !== 'string' || !result.token) throw new Error('Login response has no token');
     token = result.token;
@@ -584,6 +598,7 @@ const routes = {
 }
 return { configure, request,
   login,
+  requestPasswordReset,
   verifyEmail,
   download,
   logout() { loginVersion++; token = null; },
