@@ -27,6 +27,8 @@ public class AdminBootstrap {
                 admin.setPasswordHash(
                         passwordEncoder.encode("ChangeMe123!")
                 );
+
+                admin.setEmail("guidancesystem.admin@gmail.com");
                 admin.setFullName("System Administrator");
                 admin.setAdminRole("SUPER_ADMIN");
 

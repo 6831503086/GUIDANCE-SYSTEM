@@ -55,13 +55,13 @@ public class LoginService {
         }
 
         Admin admin = adminRepository
-                .findByUsername(username)
-                .orElse(null);
+        .findByUsernameOrEmail(username, username)
+        .orElse(null);
 
         if (admin != null && passwordEncoder.matches(
                 password, admin.getPasswordHash())) {
 
-            return jwtService.generateToken(username, "ADMIN");
+            return jwtService.generateToken(admin.getUsername(), "ADMIN");
         }
 
         throw new IllegalArgumentException(

@@ -13,7 +13,10 @@ public class Admin {
     private Long adminId;
 
     @Column(name = "username", nullable = false, unique = true)
-    private String username;
+    private String username;    
+
+    @Column(name = "email", nullable = false, unique = true)
+    private String email;
 
     @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     @Column(name = "password_hash", nullable = false)
@@ -54,6 +57,13 @@ public class Admin {
 
     public String getFullName() {
         return fullName;
+    }
+    public String getEmail() {
+    return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
     }
 
     public void setFullName(String fullName) {
