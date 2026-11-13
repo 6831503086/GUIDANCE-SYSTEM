@@ -5,6 +5,7 @@ import guidance_system.service.LoginService;
 import guidance_system.service.GuidanceTeacherService;
 
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 
 import org.springframework.http.HttpStatus;
@@ -32,7 +33,7 @@ public class LoginController {
 
         try {
             String token = loginService.login(
-                    request.username(),
+                    request.email(),
                     request.password()
             );
 
@@ -46,7 +47,7 @@ public class LoginController {
         } catch (IllegalArgumentException e) {
             return ResponseEntity
                     .status(HttpStatus.UNAUTHORIZED)
-                    .body(Map.of("message", "Invalid username or password."));
+                    .body(Map.of("message", e.getMessage()));
         }
     }
 
@@ -56,7 +57,6 @@ public class LoginController {
             @Valid @RequestBody ForgotPasswordRequest request) {
 
         teacherService.requestPasswordReset(
-                request.schoolId(),
                 request.email()
         );
 
@@ -90,8 +90,9 @@ public class LoginController {
     }
 
     public record LoginRequest(
-            @NotBlank(message = "Username is required")
-            String username,
+            @NotBlank(message = "Email is required")
+            @Email(message = "Please provide a valid email address")
+            String email,
 
             @NotBlank(message = "Password is required")
             String password
@@ -99,12 +100,11 @@ public class LoginController {
     }
 
     public record ForgotPasswordRequest(
-            Long schoolId,
-
-            @NotBlank(message = "Email is required")
-            String email
-    ) {
-    }
+        @NotBlank(message = "Email is required")
+        @Email(message = "Please provide a valid email address")
+        String email
+      ) {
+      }
 
     public record ResetPasswordRequest(
             @NotBlank(message = "Token is required")

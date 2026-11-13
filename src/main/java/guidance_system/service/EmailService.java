@@ -39,25 +39,27 @@ public class EmailService {
         mailSender.send(message);
     }
 
+
     public void sendPasswordResetEmail(String email, String token) {
 
-        String resetLink =
-                verificationBaseUrl
-                + "/api/auth/reset-password?token="
-                + token;
+    String resetLink =
+            verificationBaseUrl
+            + "/?token="
+        + token;
 
-        SimpleMailMessage message = new SimpleMailMessage();
+    SimpleMailMessage message = new SimpleMailMessage();
 
-        message.setTo(email);
-        message.setSubject("Guidance System - Password Reset");
-        message.setText(
-                "We received a request to reset your Guidance System password.\n\n"
-                + "Please click the link below to reset your password:\n\n"
-                + resetLink
-                + "\n\nThis link expires in 24 hours.\n"
-                + "If you did not request this, please ignore this email."
-        );
+    message.setTo(email);
+    message.setSubject("Guidance System - Password Reset");
+    message.setText(
+            "We received a request to reset your Guidance System password.\n\n"
+            + "Please open the link below to reset your password:\n\n"
+            + resetLink
+            + "\n\nThis link expires in 24 hours.\n"
+            + "If you did not request this, please ignore this email."
+    );
 
-        mailSender.send(message);
+    mailSender.send(message);
     }
+
 }

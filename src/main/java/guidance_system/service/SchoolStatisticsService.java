@@ -28,8 +28,8 @@ public class SchoolStatisticsService {
             ApplicantRepository applicantRepository,
             ApplicantSelectionRepository selectionRepository,
             GuidanceTeacherRepository teacherRepository,
-            ProgramInterestRepository programInterestRepository) 
-            {
+            ProgramInterestRepository programInterestRepository) {
+
         this.applicantRepository = applicantRepository;
         this.selectionRepository = selectionRepository;
         this.teacherRepository = teacherRepository;
@@ -38,12 +38,12 @@ public class SchoolStatisticsService {
 
     @Transactional(readOnly = true)
     public SchoolStatisticsResponse getStatistics(
-            String username,
+            String email,
             Integer academicYear,
             String admissionRound,
             Long programId) {
 
-        GuidanceTeacher teacher = teacherRepository.findByUsername(username)
+        GuidanceTeacher teacher = teacherRepository.findByEmail(email)
                 .orElseThrow(() ->
                         new IllegalArgumentException("Guidance teacher not found."));
 
@@ -61,21 +61,21 @@ public class SchoolStatisticsService {
         String selectedRound = normalize(admissionRound);
 
         List<Applicant> schoolApplicants = applicantRepository.findAll().stream()
-        .filter(a -> a.getSchool() != null
-                && Objects.equals(
-                        a.getSchool().getSchoolId(), schoolId))
-        .collect(Collectors.toList());
+                .filter(a -> a.getSchool() != null
+                        && Objects.equals(
+                                a.getSchool().getSchoolId(), schoolId))
+                .collect(Collectors.toList());
 
         if (programId != null) {
-        List<Long> interestedApplicantIds =
-                programInterestRepository.findApplicantIdsBySchoolAndProgram(
-                        schoolId, programId);
+            List<Long> interestedApplicantIds =
+                    programInterestRepository.findApplicantIdsBySchoolAndProgram(
+                            schoolId, programId);
 
-        Set<Long> interestedIds = new HashSet<>(interestedApplicantIds);
+            Set<Long> interestedIds = new HashSet<>(interestedApplicantIds);
 
-        schoolApplicants = schoolApplicants.stream()
-                .filter(a -> interestedIds.contains(a.getApplicantId()))
-                .collect(Collectors.toList());
+            schoolApplicants = schoolApplicants.stream()
+                    .filter(a -> interestedIds.contains(a.getApplicantId()))
+                    .collect(Collectors.toList());
         }
 
         List<Long> applicantIds = schoolApplicants.stream()
@@ -139,40 +139,41 @@ public class SchoolStatisticsService {
                 selectedYear,
                 selectedRound,
                 programId,
-        new SchoolStatisticsResponse.SummaryCards(
-                createCard(total, total, previousTotal),
-                selectionResultsPublished
-                        ? createCard(eligible, total, previousEligible) : null,
-                selectionResultsPublished
-                        ? createCard(selected, total, previousSelected) : null,
-                selectionResultsPublished
-                        ? createCard(enrolled, total, previousEnrolled) : null,
-                selectionResultsPublished
-                        ? createCard(waived, total, previousWaived) : null,
-                selectionResultsPublished
-                        ? createCard(notEnrolled, total, previousNotEnrolled) : null
-),
-        
-        selectionResultsPublished
-                ? List.of(
-                        new SchoolStatisticsResponse.ChartItem("Applied", total),
-                        new SchoolStatisticsResponse.ChartItem("Interview Eligible", eligible),
-                        new SchoolStatisticsResponse.ChartItem("Selected", selected),
-                        new SchoolStatisticsResponse.ChartItem("Enrolled", enrolled)
-                )
-                : List.of(
-                        new SchoolStatisticsResponse.ChartItem("Applied", total)
+
+                new SchoolStatisticsResponse.SummaryCards(
+                        createCard(total, total, previousTotal),
+                        selectionResultsPublished
+                                ? createCard(eligible, total, previousEligible) : null,
+                        selectionResultsPublished
+                                ? createCard(selected, total, previousSelected) : null,
+                        selectionResultsPublished
+                                ? createCard(enrolled, total, previousEnrolled) : null,
+                        selectionResultsPublished
+                                ? createCard(waived, total, previousWaived) : null,
+                        selectionResultsPublished
+                                ? createCard(notEnrolled, total, previousNotEnrolled) : null
                 ),
 
-        selectionResultsPublished
-                ? List.of(
-                        new SchoolStatisticsResponse.ChartItem("Enrolled", enrolled),
-                        new SchoolStatisticsResponse.ChartItem("Waived", waived),
-                        new SchoolStatisticsResponse.ChartItem("Not Enrolled", notEnrolled)
-                )
-                : List.of(),
+                selectionResultsPublished
+                        ? List.of(
+                                new SchoolStatisticsResponse.ChartItem("Applied", total),
+                                new SchoolStatisticsResponse.ChartItem("Interview Eligible", eligible),
+                                new SchoolStatisticsResponse.ChartItem("Selected", selected),
+                                new SchoolStatisticsResponse.ChartItem("Enrolled", enrolled)
+                        )
+                        : List.of(
+                                new SchoolStatisticsResponse.ChartItem("Applied", total)
+                        ),
 
-        rows
+                selectionResultsPublished
+                        ? List.of(
+                                new SchoolStatisticsResponse.ChartItem("Enrolled", enrolled),
+                                new SchoolStatisticsResponse.ChartItem("Waived", waived),
+                                new SchoolStatisticsResponse.ChartItem("Not Enrolled", notEnrolled)
+                        )
+                        : List.of(),
+
+                rows
         );
     }
 

@@ -1,3 +1,4 @@
+
 package guidance_system.entity;
 
 import jakarta.persistence.*;
@@ -38,9 +39,6 @@ public class GuidanceTeacher {
 
     @Column(name = "pending_email", length = 150)
     private String pendingEmail;
-
-    @Column(name = "username", length = 50)
-    private String username;
 
     @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     @Column(name = "password_hash", length = 100)
@@ -137,14 +135,6 @@ public class GuidanceTeacher {
 
     public void setPendingEmail(String pendingEmail) {
         this.pendingEmail = pendingEmail;
-    }
-
-    public String getUsername() {
-        return username;
-    }
-
-    public void setUsername(String username) {
-        this.username = username;
     }
 
     public String getPasswordHash() {

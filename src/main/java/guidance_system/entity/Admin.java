@@ -1,3 +1,4 @@
+
 package guidance_system.entity;
 
 import jakarta.persistence.*;
@@ -11,9 +12,6 @@ public class Admin {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "admin_id")
     private Long adminId;
-
-    @Column(name = "username", nullable = false, unique = true)
-    private String username;    
 
     @Column(name = "email", nullable = false, unique = true)
     private String email;
@@ -39,12 +37,12 @@ public class Admin {
         this.adminId = adminId;
     }
 
-    public String getUsername() {
-        return username;
+    public String getEmail() {
+        return email;
     }
 
-    public void setUsername(String username) {
-        this.username = username;
+    public void setEmail(String email) {
+        this.email = email;
     }
 
     public String getPasswordHash() {
@@ -57,13 +55,6 @@ public class Admin {
 
     public String getFullName() {
         return fullName;
-    }
-    public String getEmail() {
-    return email;
-    }
-
-    public void setEmail(String email) {
-        this.email = email;
     }
 
     public void setFullName(String fullName) {

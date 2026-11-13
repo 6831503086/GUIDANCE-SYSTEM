@@ -39,9 +39,9 @@ public class PostService {
             throw new IllegalStateException("Admin is not authenticated.");
         }
 
-        String username = authentication.getName();
+        String email = authentication.getName();
 
-        return adminRepository.findByUsername(username)
+        return adminRepository.findByEmail(email)
                 .orElseThrow(() ->
                         new IllegalArgumentException("Admin account not found."));
     }
@@ -92,7 +92,6 @@ public class PostService {
         });
     }
 
-
     // Unpublish a post and return it to draft status
     public Optional<Post> unpublish(Long id) {
         return repository.findById(id).map(post -> {
@@ -111,7 +110,6 @@ public class PostService {
             return savedPost;
         });
     }
-
 
     // Hide a post
     public Optional<Post> hide(Long id) {
@@ -153,50 +151,50 @@ public class PostService {
 
     private void validatePostType(String postType) {
 
-    if (postType == null || postType.isBlank()) {
-        throw new IllegalArgumentException(
-                "Post type is required."
-        );
-    }
+        if (postType == null || postType.isBlank()) {
+            throw new IllegalArgumentException(
+                    "Post type is required."
+            );
+        }
 
-    boolean validType =
-            "NEWS".equalsIgnoreCase(postType.trim())
-            || "PR".equalsIgnoreCase(postType.trim())
-            || "ANNOUNCEMENT".equalsIgnoreCase(postType.trim());
+        boolean validType =
+                "NEWS".equalsIgnoreCase(postType.trim())
+                || "PR".equalsIgnoreCase(postType.trim())
+                || "ANNOUNCEMENT".equalsIgnoreCase(postType.trim());
 
-    if (!validType) {
-        throw new IllegalArgumentException(
-                "Invalid post type. Allowed values: NEWS, PR, ANNOUNCEMENT."
-        );
-    }
+        if (!validType) {
+            throw new IllegalArgumentException(
+                    "Invalid post type. Allowed values: NEWS, PR, ANNOUNCEMENT."
+            );
+        }
     }
 
     private void validateRequiredFields(Post post) {
 
-    if (post.getTitle() == null || post.getTitle().isBlank()) {
-        throw new IllegalArgumentException("Title is required.");
-    }
+        if (post.getTitle() == null || post.getTitle().isBlank()) {
+            throw new IllegalArgumentException("Title is required.");
+        }
 
-    if (post.getSummary() == null || post.getSummary().isBlank()) {
-        throw new IllegalArgumentException("Summary is required.");
-    }
+        if (post.getSummary() == null || post.getSummary().isBlank()) {
+            throw new IllegalArgumentException("Summary is required.");
+        }
 
-    if (post.getContent() == null || post.getContent().isBlank()) {
-        throw new IllegalArgumentException("Content is required.");
-    }
+        if (post.getContent() == null || post.getContent().isBlank()) {
+            throw new IllegalArgumentException("Content is required.");
+        }
 
-    if (post.getTargetAudience() == null
-            || post.getTargetAudience().isBlank()) {
-        throw new IllegalArgumentException("Target audience is required.");
-    }
+        if (post.getTargetAudience() == null
+                || post.getTargetAudience().isBlank()) {
+            throw new IllegalArgumentException("Target audience is required.");
+        }
 
-    if (post.getVisibleStartDate() == null) {
-        throw new IllegalArgumentException("Display start date is required.");
-    }
+        if (post.getVisibleStartDate() == null) {
+            throw new IllegalArgumentException("Display start date is required.");
+        }
 
-    if (post.getVisibleEndDate() == null) {
-        throw new IllegalArgumentException("Display end date is required.");
-    }
+        if (post.getVisibleEndDate() == null) {
+            throw new IllegalArgumentException("Display end date is required.");
+        }
     }
 
     // Validate event and visibility dates
@@ -223,7 +221,6 @@ public class PostService {
         }
     }
 
-    // Update an existing post
     // Update an existing post
     public Optional<Post> updatePost(Long id, Post details) {
         return repository.findById(id).map(post -> {

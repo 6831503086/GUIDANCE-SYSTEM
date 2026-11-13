@@ -1,3 +1,4 @@
+
 package guidance_system.controller;
 
 import guidance_system.entity.GuidanceTeacher;
@@ -13,8 +14,8 @@ import org.springframework.security.core.Authentication;
 import guidance_system.service.ProfilePictureService;
 import org.springframework.web.multipart.MultipartFile;
 import guidance_system.repository.PrefixRepository;
-import java.io.IOException;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
@@ -33,7 +34,8 @@ public class GuidanceTeacherController {
             GuidanceTeacherRepository repository,
             GuidanceTeacherService service,
             ProfilePictureService profilePictureService,
-            PrefixRepository prefixRepository){
+            PrefixRepository prefixRepository) {
+
         this.repository = repository;
         this.service = service;
         this.profilePictureService = profilePictureService;
@@ -48,6 +50,7 @@ public class GuidanceTeacherController {
     @GetMapping("/{id:[0-9]+}")
     public ResponseEntity<GuidanceTeacher> getById(
             @PathVariable Long id) {
+
         return repository.findById(id)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
@@ -58,9 +61,11 @@ public class GuidanceTeacherController {
     @PreAuthorize("permitAll()")
     public ResponseEntity<?> create(
             @RequestBody GuidanceTeacher teacher) {
+
         try {
             return ResponseEntity.ok(
                     service.registerTeacher(teacher));
+
         } catch (IllegalArgumentException exception) {
             return ResponseEntity.badRequest()
                     .body(exception.getMessage());
@@ -72,7 +77,7 @@ public class GuidanceTeacherController {
     public ResponseEntity<GuidanceTeacher> getMyProfile(
             Authentication authentication) {
 
-        return repository.findByUsername(authentication.getName())
+        return repository.findByEmail(authentication.getName())
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
@@ -81,37 +86,46 @@ public class GuidanceTeacherController {
     @PreAuthorize("hasRole('TEACHER')")
     public ResponseEntity<?> renewMyAcademicYear(
             Authentication authentication,
-            @RequestBody java.util.Map<String, Object> request) {
+            @RequestBody Map<String, Object> request) {
 
         try {
             @SuppressWarnings("unchecked")
-            java.util.Map<String, Object> teacherData =
-                    (java.util.Map<String, Object>) request.get("teacher");
+            Map<String, Object> teacherData =
+                    (Map<String, Object>) request.get("teacher");
 
             @SuppressWarnings("unchecked")
-            java.util.Map<String, Object> prefixData =
-                    (java.util.Map<String, Object>) teacherData.get("prefix");
+            Map<String, Object> prefixData =
+                    (Map<String, Object>) teacherData.get("prefix");
 
             @SuppressWarnings("unchecked")
-            java.util.Map<String, Object> schoolData =
-                    (java.util.Map<String, Object>) teacherData.get("school");
+            Map<String, Object> schoolData =
+                    (Map<String, Object>) teacherData.get("school");
 
             GuidanceTeacher details = new GuidanceTeacher();
 
             guidance_system.entity.Prefix prefix =
                     new guidance_system.entity.Prefix();
+
             prefix.setPrefixId(
                     Long.valueOf(prefixData.get("prefixId").toString()));
+
             details.setPrefix(prefix);
 
-            details.setFirstName((String) teacherData.get("firstName"));
-            details.setLastName((String) teacherData.get("lastName"));
-            details.setPhone((String) teacherData.get("phone"));
+            details.setFirstName(
+                    (String) teacherData.get("firstName"));
+
+            details.setLastName(
+                    (String) teacherData.get("lastName"));
+
+            details.setPhone(
+                    (String) teacherData.get("phone"));
+
             details.setPositionTitle(
                     (String) teacherData.get("positionTitle"));
 
             guidance_system.entity.School school =
                     new guidance_system.entity.School();
+
             school.setName((String) schoolData.get("name"));
             school.setSchoolCode((String) schoolData.get("schoolCode"));
             school.setSchoolType((String) schoolData.get("schoolType"));
@@ -127,10 +141,11 @@ public class GuidanceTeacherController {
                     targetYear);
 
             return ResponseEntity.ok(
-                    java.util.Map.of(
+                    Map.of(
                             "message", "Academic year renewed successfully.",
                             "activeAcademicYear",
-                            renewed.getActiveAcademicYear()));
+                            renewed.getActiveAcademicYear()
+                    ));
 
         } catch (IllegalArgumentException exception) {
             return ResponseEntity.badRequest()
@@ -141,110 +156,100 @@ public class GuidanceTeacherController {
     @PutMapping("/me")
     @PreAuthorize("hasRole('TEACHER')")
     public ResponseEntity<?> updateMyProfile(
-        Authentication authentication,
-        @RequestBody GuidanceTeacher details) {
+            Authentication authentication,
+            @RequestBody GuidanceTeacher details) {
 
         Prefix prefix = prefixRepository
                 .findById(details.getPrefix().getPrefixId())
                 .orElse(null);
 
         if (prefix == null) {
-        return ResponseEntity.badRequest()
-                .body("Invalid prefix ID.");
+            return ResponseEntity.badRequest()
+                    .body("Invalid prefix ID.");
         }
 
-        if (details.getPhone() != null &&
-        !details.getPhone().matches("^0[0-9]{9}$")) {
+        if (details.getPhone() != null
+                && !details.getPhone().matches("^0[0-9]{9}$")) {
 
-        return ResponseEntity.badRequest()
-                .body("Please enter a valid 10-digit phone number.");
+            return ResponseEntity.badRequest()
+                    .body("Please enter a valid 10-digit phone number.");
         }
 
-        return repository.findByUsername(authentication.getName())
-            .map(teacher -> {
+        return repository.findByEmail(authentication.getName())
+                .map(teacher -> {
 
-                if (details.getFirstName() == null ||
-                    details.getFirstName().isBlank() ||
-                    details.getLastName() == null ||
-                    details.getLastName().isBlank() ||
-                    details.getPrefix() == null ||
-                    details.getPrefix().getPrefixId() == null) {
+                    if (details.getFirstName() == null
+                            || details.getFirstName().isBlank()
+                            || details.getLastName() == null
+                            || details.getLastName().isBlank()
+                            || details.getPrefix() == null
+                            || details.getPrefix().getPrefixId() == null) {
 
-                    return ResponseEntity.badRequest()
-                            .body("Prefix, first name and last name are required.");
-                }
+                        return ResponseEntity.badRequest()
+                                .body("Prefix, first name and last name are required.");
+                    }
 
-                teacher.setPrefix(prefix);
-                teacher.setFirstName(details.getFirstName());
-                teacher.setLastName(details.getLastName());
-                teacher.setPhone(details.getPhone());
+                    teacher.setPrefix(prefix);
+                    teacher.setFirstName(details.getFirstName());
+                    teacher.setLastName(details.getLastName());
+                    teacher.setPhone(details.getPhone());
 
-                return ResponseEntity.ok(repository.save(teacher));
-            })
-            .orElse(ResponseEntity.notFound().build());
+                    return ResponseEntity.ok(repository.save(teacher));
+                })
+                .orElse(ResponseEntity.notFound().build());
     }
 
-    @PostMapping(value = "/me/profile-picture",
-        consumes = "multipart/form-data")
+    @PostMapping(
+            value = "/me/profile-picture",
+            consumes = "multipart/form-data")
     @PreAuthorize("hasRole('TEACHER')")
     public ResponseEntity<?> uploadMyProfilePicture(
-        Authentication authentication,
-        @RequestParam("file") MultipartFile file) {
+            Authentication authentication,
+            @RequestParam("file") MultipartFile file) {
 
-    try {
-        GuidanceTeacher teacher = repository
-                .findByUsername(authentication.getName())
-                .orElse(null);
+        try {
+            GuidanceTeacher teacher = repository
+                    .findByEmail(authentication.getName())
+                    .orElse(null);
 
-        if (teacher == null) {
-            return ResponseEntity.notFound().build();
+            if (teacher == null) {
+                return ResponseEntity.notFound().build();
+            }
+
+            String pictureUrl =
+                    profilePictureService.uploadPicture(teacher, file);
+
+            return ResponseEntity.ok(
+                    Map.of(
+                            "message", "Profile picture uploaded successfully.",
+                            "profilePicture", pictureUrl
+                    ));
+
+        } catch (IllegalArgumentException exception) {
+            return ResponseEntity.badRequest()
+                    .body(exception.getMessage());
+
+        } catch (IOException exception) {
+            return ResponseEntity.internalServerError()
+                    .body("Unable to upload profile picture.");
         }
-
-        String pictureUrl =
-                profilePictureService.uploadPicture(teacher, file);
-
-        return ResponseEntity.ok(
-                java.util.Map.of(
-                        "message", "Profile picture uploaded successfully.",
-                        "profilePicture", pictureUrl
-                )
-        );
-
-    } 
-    
-    catch (IllegalArgumentException exception) {
-        return ResponseEntity.badRequest()
-                .body(exception.getMessage());
-
-    } 
-    
-    catch (IOException exception) {
-        return ResponseEntity.internalServerError()
-                .body("Unable to upload profile picture.");
     }
-}
 
     @PutMapping("/me/email")
     @PreAuthorize("hasRole('TEACHER')")
     public ResponseEntity<String> requestEmailChange(
-        Authentication authentication,
-        @RequestBody java.util.Map<String, String> request) {
+            Authentication authentication,
+            @RequestBody Map<String, String> request) {
 
-        try 
-        {
+        try {
             service.requestEmailChange(
                     authentication.getName(),
-                    request.get("newEmail")
-            );
+                    request.get("newEmail"));
 
             return ResponseEntity.ok(
-                    "Verification email sent to your new email address."
-            );
+                    "Verification email sent to your new email address.");
 
-        } 
-    
-        catch (IllegalArgumentException exception) 
-        {
+        } catch (IllegalArgumentException exception) {
             return ResponseEntity.badRequest()
                     .body(exception.getMessage());
         }
@@ -253,31 +258,30 @@ public class GuidanceTeacherController {
     @DeleteMapping("/me")
     @PreAuthorize("hasRole('TEACHER')")
     public ResponseEntity<?> deleteMyAccount(
-        Authentication authentication) {
+            Authentication authentication) {
 
-    GuidanceTeacher teacher = repository
-            .findByUsername(authentication.getName())
-            .orElse(null);
+        GuidanceTeacher teacher = repository
+                .findByEmail(authentication.getName())
+                .orElse(null);
 
-    if (teacher == null) {
-        return ResponseEntity.notFound().build();
-    }
+        if (teacher == null) {
+            return ResponseEntity.notFound().build();
+        }
 
-    Long teacherId = teacher.getTeacherId();
+        Long teacherId = teacher.getTeacherId();
 
-    try {
-        service.deleteTeacherAccount(teacherId);
+        try {
+            service.deleteTeacherAccount(teacherId);
 
-        return ResponseEntity.ok(
-                Map.of(
-                        "message", "Your account has been deleted successfully.",
-                        "teacherId", teacherId
-                )
-        );
+            return ResponseEntity.ok(
+                    Map.of(
+                            "message", "Your account has been deleted successfully.",
+                            "teacherId", teacherId
+                    ));
 
-    } catch (IllegalArgumentException exception) {
-        return ResponseEntity.notFound().build();
-    }
+        } catch (IllegalArgumentException exception) {
+            return ResponseEntity.notFound().build();
+        }
     }
 
     @PutMapping("/{id}")
@@ -286,6 +290,7 @@ public class GuidanceTeacherController {
             @RequestBody GuidanceTeacher details) {
 
         return repository.findById(id).map(teacher -> {
+
             teacher.setSchool(details.getSchool());
             teacher.setPrefix(details.getPrefix());
             teacher.setFirstName(details.getFirstName());
@@ -293,13 +298,14 @@ public class GuidanceTeacherController {
             teacher.setPositionTitle(details.getPositionTitle());
             teacher.setPhone(details.getPhone());
             teacher.setEmail(details.getEmail());
-            teacher.setUsername(details.getUsername());
             teacher.setPdpaConsent(details.getPdpaConsent());
             teacher.setThaidSub(details.getThaidSub());
+
             teacher.setActiveAcademicYear(
                     details.getActiveAcademicYear());
 
             return ResponseEntity.ok(repository.save(teacher));
+
         }).orElse(ResponseEntity.notFound().build());
     }
 
@@ -307,19 +313,16 @@ public class GuidanceTeacherController {
     public ResponseEntity<?> delete(@PathVariable Long id) {
 
         try {
-        service.deleteTeacherAccount(id);
+            service.deleteTeacherAccount(id);
 
-        return ResponseEntity.ok(
-                Map.of(
-                        "message", "Teacher account deleted successfully.",
-                        "teacherId", id
-                )
-        );
+            return ResponseEntity.ok(
+                    Map.of(
+                            "message", "Teacher account deleted successfully.",
+                            "teacherId", id
+                    ));
 
-        } 
-        catch (IllegalArgumentException e) {
-                return ResponseEntity.notFound().build();
+        } catch (IllegalArgumentException exception) {
+            return ResponseEntity.notFound().build();
         }
-
     }
 }

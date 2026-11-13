@@ -23,7 +23,6 @@ public class AdminBootstrap {
 
                 Admin admin = new Admin();
 
-                admin.setUsername("systemadmin");
                 admin.setPasswordHash(
                         passwordEncoder.encode("ChangeMe123!")
                 );
@@ -41,4 +40,3 @@ public class AdminBootstrap {
         };
     }
 }
-    

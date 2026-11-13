@@ -43,7 +43,7 @@ public class AdminActivityService {
         }
 
         Admin admin = adminRepository
-                .findByUsername(authentication.getName())
+                .findByEmail(authentication.getName())
                 .orElseThrow(() ->
                         new IllegalArgumentException(
                                 "Admin account not found."

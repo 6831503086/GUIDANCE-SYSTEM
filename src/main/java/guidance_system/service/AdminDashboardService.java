@@ -417,17 +417,18 @@ public class AdminDashboardService {
         return value.trim();
     }
 
-    private AdminDashboardResponse.RecentActivity toRecentActivity(
-            AdminActivity activity) {
+
+        private AdminDashboardResponse.RecentActivity toRecentActivity(
+                AdminActivity activity) {
 
         String adminName = "Unknown administrator";
 
         if (activity.getAdmin() != null) {
-            adminName = activity.getAdmin().getFullName();
+                adminName = activity.getAdmin().getFullName();
 
-            if (adminName == null || adminName.isBlank()) {
-                adminName = activity.getAdmin().getUsername();
-            }
+                if (adminName == null || adminName.isBlank()) {
+                adminName = activity.getAdmin().getEmail();
+                }
         }
 
         return new AdminDashboardResponse.RecentActivity(
@@ -439,5 +440,6 @@ public class AdminDashboardService {
                 activity.getEntityId(),
                 activity.getCreatedAt()
         );
-    }
+        }
+
 }

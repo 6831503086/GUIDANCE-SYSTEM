@@ -1,3 +1,4 @@
+
 package guidance_system.service;
 
 import guidance_system.entity.Admin;
@@ -28,12 +29,11 @@ public class LoginService {
         this.jwtService = jwtService;
     }
 
-    public String login(String username, String password) {
+    public String login(String email, String password) {
 
         GuidanceTeacher teacher = teacherRepository
-                .findByUsername(username)
+                .findByEmail(email)
                 .orElse(null);
-
 
         if (teacher != null) {
 
@@ -46,28 +46,26 @@ public class LoginService {
             if (passwordEncoder.matches(
                     password, teacher.getPasswordHash())) {
 
-                return jwtService.generateToken(username, "TEACHER");
+                return jwtService.generateToken(email, "TEACHER");
             }
 
             throw new IllegalArgumentException(
-                    "Invalid username or password."
+                    "Invalid email or password."
             );
         }
 
         Admin admin = adminRepository
-        .findByUsernameOrEmail(username, username)
-        .orElse(null);
+                .findByEmail(email)
+                .orElse(null);
 
         if (admin != null && passwordEncoder.matches(
                 password, admin.getPasswordHash())) {
 
-            return jwtService.generateToken(admin.getUsername(), "ADMIN");
+            return jwtService.generateToken(email, "ADMIN");
         }
 
         throw new IllegalArgumentException(
-                "Invalid username or password."
+                "Invalid email or password."
         );
     }
-
-    
 }

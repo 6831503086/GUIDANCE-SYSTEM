@@ -1,3 +1,4 @@
+
 package guidance_system.controller;
 
 import guidance_system.entity.Applicant;
@@ -129,7 +130,7 @@ public class ApplicantController {
         if (isTeacher) {
 
             GuidanceTeacher teacher = teacherRepository
-                    .findByUsername(authentication.getName())
+                    .findByEmail(authentication.getName())
                     .orElse(null);
 
             if (teacher == null || teacher.getSchool() == null

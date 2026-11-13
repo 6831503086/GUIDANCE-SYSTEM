@@ -1,3 +1,4 @@
+
 package guidance_system.controller;
 
 import guidance_system.entity.Post;
@@ -52,7 +53,7 @@ public class PostRegistrationController {
 
         if (!isAdmin(authentication)) {
             GuidanceTeacher loggedInTeacher =
-                    teacherRepository.findByUsername(authentication.getName())
+                    teacherRepository.findByEmail(authentication.getName())
                             .orElse(null);
 
             if (loggedInTeacher == null
@@ -94,7 +95,7 @@ public class PostRegistrationController {
         Post post = postRepository.findById(postId).orElse(null);
 
         GuidanceTeacher teacher =
-                teacherRepository.findByUsername(authentication.getName())
+                teacherRepository.findByEmail(authentication.getName())
                         .orElse(null);
 
         if (post == null || teacher == null) {
@@ -133,7 +134,7 @@ public class PostRegistrationController {
 
         if (!isAdmin(authentication)) {
             GuidanceTeacher loggedInTeacher =
-                    teacherRepository.findByUsername(authentication.getName())
+                    teacherRepository.findByEmail(authentication.getName())
                             .orElse(null);
 
             if (loggedInTeacher == null

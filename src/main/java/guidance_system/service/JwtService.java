@@ -1,3 +1,4 @@
+
 package guidance_system.service;
 
 import com.nimbusds.jose.jwk.source.ImmutableSecret;
@@ -41,7 +42,7 @@ public class JwtService {
         this.expirationMs = expirationMs;
     }
 
-    public String generateToken(String username, String role) {
+    public String generateToken(String email, String role) {
 
         Instant now = Instant.now();
 
@@ -49,7 +50,7 @@ public class JwtService {
                 .issuer("guidance-system")
                 .issuedAt(now)
                 .expiresAt(now.plusMillis(expirationMs))
-                .subject(username)
+                .subject(email)
                 .claim("role", role)
                 .build();
 

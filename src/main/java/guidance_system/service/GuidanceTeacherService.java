@@ -46,7 +46,7 @@ public class GuidanceTeacherService {
     }
 
     // Register teacher and generate email verification token
-    
+
     // Register teacher and generate email verification token
     @Transactional
     public GuidanceTeacher registerTeacher(GuidanceTeacher teacher) {
@@ -63,10 +63,7 @@ public class GuidanceTeacherService {
             throw new IllegalArgumentException("Password is required.");
         }
 
-        // Check duplicate username
-        if (repository.existsByUsername(teacher.getUsername())) {
-            throw new IllegalArgumentException("Username already exists.");
-        }
+
 
         // Check duplicate email
         if (repository.existsByEmail(teacher.getEmail())) {
@@ -112,7 +109,7 @@ public class GuidanceTeacherService {
 
     @Transactional
     public void requestEmailChange(
-        String username,
+        String currentEmail,
         String newEmail) {
 
     if (newEmail == null || newEmail.isBlank()) {
@@ -123,7 +120,7 @@ public class GuidanceTeacherService {
     throw new IllegalArgumentException("Please enter a valid email address.");
     }
 
-    GuidanceTeacher teacher = repository.findByUsername(username)
+    GuidanceTeacher teacher = repository.findByEmail(currentEmail)
             .orElseThrow(() ->
                     new IllegalArgumentException("Teacher not found."));
 
@@ -178,11 +175,11 @@ public class GuidanceTeacherService {
 
     @Transactional
     public GuidanceTeacher renewAcademicYear(
-        String username,
+        String email,
         GuidanceTeacher details,
         Integer targetAcademicYear) {
 
-    GuidanceTeacher teacher = repository.findByUsername(username)
+    GuidanceTeacher teacher = repository.findByEmail(email)
             .orElseThrow(() ->
                     new IllegalArgumentException("Teacher not found."));
 
@@ -245,17 +242,15 @@ public class GuidanceTeacherService {
 
     // Request password reset
     @Transactional
-    public void requestPasswordReset(
-            Long schoolId,
-            String email) {
+    public void requestPasswordReset(String email) {
 
-        if (schoolId == null || email == null || email.isBlank()) {
+        if (email == null || email.isBlank()) {
             throw new IllegalArgumentException(
-                    "School and email are required.");
+                    "Email is required.");
         }
 
         GuidanceTeacher teacher = repository
-                .findBySchool_SchoolIdAndEmail(schoolId, email)
+                .findByEmail(email)
                 .orElse(null);
 
         // Do not reveal whether the account exists
@@ -270,6 +265,7 @@ public class GuidanceTeacherService {
                 teacher.getEmail(),
                 token.getToken());
     }
+
 
     // Set a new password using the reset token
     @Transactional
@@ -311,6 +307,6 @@ public class GuidanceTeacherService {
         repository.delete(teacher);
     }
 
-    
+
 
 }

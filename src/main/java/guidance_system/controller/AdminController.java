@@ -1,3 +1,4 @@
+
 package guidance_system.controller;
 
 import guidance_system.entity.Admin;
@@ -42,6 +43,16 @@ public class AdminController {
     @PostMapping
     public ResponseEntity<?> create(@RequestBody Admin admin) {
 
+        if (admin.getEmail() == null || admin.getEmail().isBlank()) {
+            return ResponseEntity.badRequest()
+                    .body("Email is required.");
+        }
+
+        if (repository.findByEmail(admin.getEmail()).isPresent()) {
+            return ResponseEntity.badRequest()
+                    .body("Email already exists.");
+        }
+
         if (admin.getPasswordHash() == null
                 || admin.getPasswordHash().isBlank()) {
             return ResponseEntity.badRequest()
@@ -62,7 +73,17 @@ public class AdminController {
 
         return repository.findById(id).map(admin -> {
 
-            admin.setUsername(details.getUsername());
+            if (details.getEmail() != null
+                    && !details.getEmail().isBlank()
+                    && !details.getEmail().equalsIgnoreCase(admin.getEmail())) {
+
+                if (repository.findByEmail(details.getEmail()).isPresent()) {
+                    return ResponseEntity.badRequest().<Admin>build();
+                }
+
+                admin.setEmail(details.getEmail());
+            }
+
             admin.setFullName(details.getFullName());
             admin.setAdminRole(details.getAdminRole());
 

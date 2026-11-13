@@ -3,13 +3,12 @@ package guidance_system.controller;
 
 import guidance_system.entity.School;
 import guidance_system.repository.SchoolRepository;
+import guidance_system.repository.GuidanceTeacherRepository;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.*;
-
-import guidance_system.repository.GuidanceTeacherRepository;
 import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -29,7 +28,6 @@ public class SchoolController {
     }
 
     // Admin and Teacher can view all schools
-    
     @GetMapping
     @PreAuthorize("hasAnyRole('ADMIN','TEACHER')")
     public List<School> getAllSchools(Authentication authentication) {
@@ -39,13 +37,13 @@ public class SchoolController {
                 .anyMatch(authority ->
                         authority.getAuthority().equals("ROLE_ADMIN"))) {
             return schoolRepository.findAll()
-                .stream()
-                .map(this::setAccountStatus)
-                .toList();
+                    .stream()
+                    .map(this::setAccountStatus)
+                    .toList();
         }
 
         // Teacher can view only their own school
-        return teacherRepository.findByUsername(authentication.getName())
+        return teacherRepository.findByEmail(authentication.getName())
                 .map(teacher -> {
                     if (teacher.getSchool() == null) {
                         return List.<School>of();
@@ -54,7 +52,6 @@ public class SchoolController {
                 })
                 .orElseGet(List::of);
     }
-
 
     // Admin can view any school; Teacher can view only their own school
     @GetMapping("/{id}")
@@ -68,12 +65,12 @@ public class SchoolController {
                         authority.getAuthority().equals("ROLE_ADMIN"))) {
 
             return schoolRepository.findById(id)
-                .map(this::setAccountStatus)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+                    .map(this::setAccountStatus)
+                    .map(ResponseEntity::ok)
+                    .orElse(ResponseEntity.notFound().build());
         }
 
-        return teacherRepository.findByUsername(authentication.getName())
+        return teacherRepository.findByEmail(authentication.getName())
                 .filter(teacher -> teacher.getSchool() != null)
                 .filter(teacher ->
                         teacher.getSchool().getSchoolId().equals(id))
@@ -122,16 +119,15 @@ public class SchoolController {
         return ResponseEntity.noContent().build();
     }
 
-
     // FR-15: View own school information
     @GetMapping("/me")
     @PreAuthorize("hasRole('TEACHER')")
     public ResponseEntity<School> getMySchool(
             Authentication authentication) {
 
-        return teacherRepository.findByUsername(authentication.getName())
+        return teacherRepository.findByEmail(authentication.getName())
                 .map(teacher -> teacher.getSchool())
-                .map(school -> ResponseEntity.ok(school))
+                .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
 
@@ -142,7 +138,7 @@ public class SchoolController {
             Authentication authentication,
             @RequestBody School details) {
 
-        return teacherRepository.findByUsername(authentication.getName())
+        return teacherRepository.findByEmail(authentication.getName())
                 .map(teacher -> {
                     School school = teacher.getSchool();
 
@@ -167,14 +163,13 @@ public class SchoolController {
 
     private School setAccountStatus(School school) {
 
-    boolean hasTeacher = teacherRepository
-            .existsBySchool_SchoolId(school.getSchoolId());
+        boolean hasTeacher = teacherRepository
+                .existsBySchool_SchoolId(school.getSchoolId());
 
-    school.setAccountStatus(
-            hasTeacher ? "ACTIVE" : "NO_GUIDANCE_TEACHER"
-    );
+        school.setAccountStatus(
+                hasTeacher ? "ACTIVE" : "NO_GUIDANCE_TEACHER"
+        );
 
-    return school;
+        return school;
     }
-
 }

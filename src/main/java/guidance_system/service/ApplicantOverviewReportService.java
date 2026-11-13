@@ -33,13 +33,13 @@ public class ApplicantOverviewReportService {
 
     @Transactional(readOnly = true)
     public ApplicantOverviewReportResponse getReport(
-            String username,
+            String email,
             Integer semester,
             Integer academicYear,
             String faculty,
             String keyword) {
 
-        GuidanceTeacher teacher = teacherRepository.findByUsername(username)
+        GuidanceTeacher teacher = teacherRepository.findByEmail(email)
                 .orElseThrow(() ->
                         new IllegalArgumentException("Guidance teacher not found."));
 
@@ -97,11 +97,11 @@ public class ApplicantOverviewReportService {
                 .collect(Collectors.toSet());
 
         List<ApplicantSelection> filteredSelections = selections.stream()
-        .filter(selection ->
-                selection.getApplicant() != null
-                        && filteredApplicantIds.contains(
-                                selection.getApplicant().getApplicantId()))
-        .collect(Collectors.toList());
+                .filter(selection ->
+                        selection.getApplicant() != null
+                                && filteredApplicantIds.contains(
+                                        selection.getApplicant().getApplicantId()))
+                .collect(Collectors.toList());
 
         Map<Long, ApplicantSelection> latestPublishedSelections =
                 new HashMap<>();
@@ -120,26 +120,26 @@ public class ApplicantOverviewReportService {
 
             boolean isNewer = false;
 
-        if (current == null) {
-        isNewer = true;
-        } else if (selection.getAppliedAt() != null
-                && (current.getAppliedAt() == null
-                || selection.getAppliedAt().isAfter(current.getAppliedAt()))) {
-        isNewer = true;
-        } else if (Objects.equals(
-                selection.getAppliedAt(), current.getAppliedAt())) {
-
-        if (selection.getApplicationId() != null
-                && (current.getApplicationId() == null
-                || selection.getApplicationId()
-                        > current.getApplicationId())) {
+            if (current == null) {
                 isNewer = true;
-        }
-        }
+            } else if (selection.getAppliedAt() != null
+                    && (current.getAppliedAt() == null
+                    || selection.getAppliedAt().isAfter(current.getAppliedAt()))) {
+                isNewer = true;
+            } else if (Objects.equals(
+                    selection.getAppliedAt(), current.getAppliedAt())) {
 
-        if (isNewer) {
-        latestPublishedSelections.put(applicantId, selection);
-        }
+                if (selection.getApplicationId() != null
+                        && (current.getApplicationId() == null
+                        || selection.getApplicationId()
+                                > current.getApplicationId())) {
+                    isNewer = true;
+                }
+            }
+
+            if (isNewer) {
+                latestPublishedSelections.put(applicantId, selection);
+            }
         }
 
         long eligible = 0;

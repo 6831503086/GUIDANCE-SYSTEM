@@ -1,3 +1,4 @@
+
 package guidance_system.service;
 
 import guidance_system.dto.TeacherProgramInterestStatisticsResponse;
@@ -28,7 +29,7 @@ public class TeacherProgramInterestStatisticsService {
 
     @Transactional(readOnly = true)
     public TeacherProgramInterestStatisticsResponse getStatistics(
-            String username,
+            String email,
             Integer semester,
             Integer academicYear,
             String faculty,
@@ -36,7 +37,7 @@ public class TeacherProgramInterestStatisticsService {
             String keyword) {
 
         GuidanceTeacher teacher = guidanceTeacherRepository
-                .findByUsername(username)
+                .findByEmail(email)
                 .orElseThrow(() -> new IllegalArgumentException(
                         "Guidance teacher account not found."));
 

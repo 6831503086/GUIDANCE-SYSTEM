@@ -1,3 +1,4 @@
+
 package guidance_system.controller;
 
 import guidance_system.entity.Post;
@@ -45,7 +46,7 @@ public class PostPinController {
             Authentication authentication) {
 
         GuidanceTeacher teacher =
-                teacherRepository.findByUsername(authentication.getName())
+                teacherRepository.findByEmail(authentication.getName())
                         .orElse(null);
 
         if (teacher == null
@@ -55,7 +56,8 @@ public class PostPinController {
         }
 
         List<PostPin> pins =
-        pinRepository.findByTeacherTeacherIdOrderByPinnedAtDesc(teacherId);
+                pinRepository.findByTeacherTeacherIdOrderByPinnedAtDesc(
+                        teacherId);
 
         return ResponseEntity.ok(pins);
     }
@@ -78,7 +80,7 @@ public class PostPinController {
         Post post = postRepository.findById(postId).orElse(null);
 
         GuidanceTeacher teacher =
-                teacherRepository.findByUsername(authentication.getName())
+                teacherRepository.findByEmail(authentication.getName())
                         .orElse(null);
 
         if (post == null || teacher == null) {
@@ -111,7 +113,7 @@ public class PostPinController {
             Authentication authentication) {
 
         GuidanceTeacher teacher =
-                teacherRepository.findByUsername(authentication.getName())
+                teacherRepository.findByEmail(authentication.getName())
                         .orElse(null);
 
         if (teacher == null

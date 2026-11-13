@@ -39,7 +39,7 @@ public class StudentInterestReportService {
 
     @Transactional(readOnly = true)
     public Page<StudentInterestReportResponse> getStudentInterestReport(
-            String username,
+            String email,
             Integer semester,
             Integer academicYear,
             String faculty,
@@ -49,7 +49,7 @@ public class StudentInterestReportService {
             int size) {
 
         GuidanceTeacher teacher = guidanceTeacherRepository
-                .findByUsername(username)
+                .findByEmail(email)
                 .orElseThrow(() ->
                         new IllegalArgumentException(
                                 "Guidance teacher account not found."));

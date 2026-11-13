@@ -555,15 +555,29 @@ const routes = {
     if ((response.headers.get('Content-Type') || '').includes('json')) return JSON.parse(text);
     return text;
   }
-  async function login(username, password) {
+  async function login(email, password) {
     const version = ++loginVersion;
     token = null;
-    const result = await request('LoginController.login', {auth:false, body:{username,password}});
-    if (version !== loginVersion) throw new Error('Login request cancelled');
-    if (typeof result?.token !== 'string' || !result.token) throw new Error('Login response has no token');
+
+    const result = await request('LoginController.login', {
+        auth: false,
+        body: {
+            email: email.trim().toLowerCase(),
+            password
+        }
+    });
+
+    if (version !== loginVersion) {
+        throw new Error('Login request cancelled');
+    }
+
+    if (typeof result?.token !== 'string' || !result.token) {
+        throw new Error('Login response has no token');
+    }
+
     token = result.token;
     return result;
-  }
+}
   async function download(operation, options = {}, filename = 'report.pdf') {
     const blob = await request(operation, {...options, responseType:'blob'});
     const url = URL.createObjectURL(blob), a = document.createElement('a');

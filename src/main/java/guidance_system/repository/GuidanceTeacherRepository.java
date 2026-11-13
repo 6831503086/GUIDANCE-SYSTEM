@@ -10,14 +10,11 @@ import java.util.Optional;
 public interface GuidanceTeacherRepository
         extends JpaRepository<GuidanceTeacher, Long> {
 
-    Optional<GuidanceTeacher> findByUsername(String username);
-
     Optional<GuidanceTeacher> findByEmail(String email);
 
     Optional<GuidanceTeacher> findBySchool_SchoolIdAndEmail(
             Long schoolId, String email);
 
-    boolean existsByUsername(String username);
 
     boolean existsByEmail(String email);
 
