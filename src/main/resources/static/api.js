@@ -507,6 +507,7 @@ const routes = {
   }
 };
   let token = null;
+  let loginVersion = 0;
   let configuration = {baseUrl: window.location.origin, endpoints: {}, getHeaders: () => ({})};
   class ApiError extends Error {
     constructor(status, message, details) { super(message); this.name = 'ApiError'; this.status = status; this.details = details; }
@@ -555,8 +556,10 @@ const routes = {
     return text;
   }
   async function login(username, password) {
+    const version = ++loginVersion;
     token = null;
     const result = await request('LoginController.login', {auth:false, body:{username,password}});
+    if (version !== loginVersion) throw new Error('Login request cancelled');
     if (typeof result?.token !== 'string' || !result.token) throw new Error('Login response has no token');
     token = result.token;
     return result;
@@ -566,6 +569,6 @@ const routes = {
     const url = URL.createObjectURL(blob), a = document.createElement('a');
     a.href = url; a.download = filename; a.click(); setTimeout(() => URL.revokeObjectURL(url), 1000);
   }
-  return {configure, request, login, download, logout(){token=null;}, ApiError,
+  return {configure, request, login, download, logout(){loginVersion++;token=null;}, ApiError,
     operations: Object.freeze(Object.fromEntries(Object.entries(routes).map(([k,v]) => [k,Object.freeze({...v})])))};
 })();
