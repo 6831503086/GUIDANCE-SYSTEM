@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="ระบบครูแนะแนว มหาวิทยาลัยแม่ฟ้าหลวง">
+  <title>ระบบครูแนะแนว | MFU</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar" id="sidebar">
+      <a class="brand" href="#" data-page="dashboard" aria-label="MFU Guidance home">
+        <div class="brand-mark"><img src="assets/crest.png" alt="ตรามหาวิทยาลัยแม่ฟ้าหลวง"></div>
+        <div class="brand-copy"><strong>ระบบครูแนะแนว</strong><span>มหาวิทยาลัยแม่ฟ้าหลวง</span></div>
+      </a>
+      <nav class="side-nav" aria-label="เมนูหลัก">
+        <button class="nav-link active" data-page="dashboard"><span class="nav-icon">⌂</span>แดชบอร์ด</button>
+        <button class="nav-link" data-page="projects"><span class="nav-icon">▤</span>โครงการสำหรับครูแนะแนว</button>
+        <button class="nav-link" data-page="calendar"><span class="nav-icon">▦</span>ปฏิทินกำหนดการ</button>
+        <button class="nav-link" data-page="applicants"><span class="nav-icon">⌕</span>ค้นหาผู้สมัคร</button>
+        <button class="nav-link" data-page="overview"><span class="nav-icon">▥</span>ภาพรวม</button>
+        <button class="nav-link" data-page="schools"><span class="nav-icon">▦</span>จัดการข้อมูลโรงเรียน</button>
+        <button class="nav-link" data-page="profile"><span class="nav-icon">▣</span>ข้อมูลส่วนตัวของฉัน</button>
+      </nav>
+      <div class="sidebar-user">
+        <div class="avatar">น</div>
+        <div><strong>นางสาวบัญชา ใจดี</strong><span>ครูแนะแนว</span></div>
+      </div>
+    </aside>
+
+    <main class="main-area">
+      <header class="topbar">
+        <button class="mobile-menu" id="mobileMenu" aria-label="เปิดเมนู">☰</button>
+        <strong>MFU</strong>
+        <button class="notification" aria-label="การแจ้งเตือน">♧</button>
+      </header>
+
+      <section class="page" id="page-dashboard">
+        <div class="page-heading">
+          <div><h1>แดชบอร์ด</h1><p>ข่าวสารและประชาสัมพันธ์สำหรับครูแนะแนว</p></div>
+        </div>
+        <div class="project-grid" id="dashboardProjects"></div>
+      </section>
+
+      <section class="page hidden" id="page-projects">
+        <div class="page-heading"><div><h1>โครงการสำหรับครูแนะแนว</h1><p>ค้นหาและติดตามโครงการประชาสัมพันธ์</p></div></div>
+        <div class="filter-panel">
+          <label>ประเภทโครงการ<select id="projectType"><option value="">ทุกประเภท</option><option>ประชาสัมพันธ์</option><option>กิจกรรม</option><option>ทุนการศึกษา</option></select></label>
+          <label>สถานะ<select id="projectStatus"><option value="">ทุกสถานะ</option><option>กำลังประชาสัมพันธ์</option><option>สิ้นสุดโครงการ</option></select></label>
+          <label class="search-field">ค้นหาโครงการ<input id="projectSearch" type="search" placeholder="ชื่อโครงการ..."></label>
+          <button class="btn btn-primary" id="filterProjects">ค้นหา</button>
+        </div>
+        <div class="project-grid" id="allProjects"></div>
+      </section>
+
+      <section class="page hidden" id="page-project-detail">
+        <div class="page-heading"><button class="back-link" data-page="dashboard">← กลับไปหน้าแดชบอร์ด</button></div>
+        <div class="detail-layout">
+          <article class="panel detail-main" id="projectDetail"></article>
+          <aside class="detail-aside">
+            <div class="panel contact-card"><h3>สอบถามข้อมูลโครงการ</h3><p>Admissions Office</p><div class="contact-phone">☎ <strong>053-916000</strong></div></div>
+            <button class="btn btn-primary btn-block" id="projectAction">ตอบรับเข้าร่วมโครงการ / ลงทะเบียน</button>
+          </aside>
+        </div>
+      </section>
+
+      <section class="page hidden" id="page-calendar">
+        <div class="page-heading"><div><h1>ปฏิทินกำหนดการ</h1><p>ติดตามกำหนดการรับสมัครและกิจกรรม</p></div></div>
+        <div class="panel calendar-panel">
+          <div class="calendar-toolbar"><button class="btn btn-outline" id="prevMonth">‹</button><h2 id="calendarMonth"></h2><button class="btn btn-outline" id="nextMonth">›</button></div>
+          <div class="calendar-grid" id="calendarGrid"></div>
+          <div class="calendar-legend"><span><i class="dot red"></i> ประชาสัมพันธ์</span><span><i class="dot gold"></i> กำหนดการ</span><span><i class="dot green"></i> กิจกรรม</span></div>
+        </div>
+      </section>
+
+      <section class="page hidden" id="page-applicants">
+        <div class="page-heading"><div><h1>ค้นหาข้อมูลผู้สมัคร</h1><p>ค้นหาข้อมูลผู้สมัครตามเงื่อนไข</p></div></div>
+        <div class="panel">
+          <div class="filter-panel">
+            <label class="search-field">ชื่อหรือรหัสผู้สมัคร<input type="search" id="applicantSearch" placeholder="ค้นหาชื่อ / รหัสผู้สมัคร..."></label>
+            <label>ปีการศึกษา<select><option>2569</option><option>2568</option></select></label>
+            <button class="btn btn-primary" id="searchApplicants">⌕ ค้นหา</button>
+          </div>
+          <div class="table-wrap"><table><thead><tr><th>รหัสผู้สมัคร</th><th>ชื่อ-นามสกุล</th><th>โครงการ</th><th>สถานะ</th></tr></thead><tbody id="applicantRows"></tbody></table></div>
+          <p class="data-note">ข้อมูลตัวอย่างสำหรับตรวจสอบหน้าจอเท่านั้น — รอเชื่อมต่อ API และฐานข้อมูลจริง</p>
+        </div>
+      </section>
+
+      <section class="page hidden" id="page-overview">
+        <div class="page-heading"><div><h1>ภาพรวม</h1><p>สถิติข้อมูลการรับสมัครและโรงเรียน</p></div></div>
+        <div class="kpi-grid">
+          <div class="panel kpi"><span>ผู้สมัครทั้งหมด</span><strong>—</strong><small>รอข้อมูลจากระบบ</small></div>
+          <div class="panel kpi"><span>โรงเรียนทั้งหมด</span><strong>—</strong><small>รอข้อมูลจากระบบ</small></div>
+          <div class="panel kpi"><span>โครงการทั้งหมด</span><strong>—</strong><small>รอข้อมูลจากระบบ</small></div>
+        </div>
+        <div class="chart-grid">
+          <div class="panel chart-panel"><h3>จำนวนผู้สมัครตามโครงการ</h3><canvas id="barChart" aria-label="กราฟจำนวนผู้สมัครตามโครงการ"></canvas></div>
+          <div class="panel chart-panel"><h3>สัดส่วนประเภทการสมัคร</h3><canvas id="doughnutChart" aria-label="กราฟสัดส่วนประเภทการสมัคร"></canvas></div>
+        </div>
+        <p class="data-note">กราฟจะแสดงข้อมูลจริงหลังเชื่อมต่อ Backend API แล้ว ขณะนี้ยังไม่มีการใส่ตัวเลขจำลอง</p>
+      </section>
+
+      <section class="page hidden" id="page-schools">
+        <div class="page-heading"><div><h1>จัดการข้อมูลโรงเรียน</h1><p>ค้นหาและดูรายละเอียดโรงเรียนในระบบ</p></div></div>
+        <div class="panel">
+          <div class="filter-panel"><label class="search-field">ชื่อโรงเรียน<input type="search" placeholder="ค้นหาชื่อโรงเรียน..."></label><label>จังหวัด<select><option>ทุกจังหวัด</option></select></label><button class="btn btn-primary">ค้นหา</button></div>
+          <div class="empty-state"><div class="empty-icon">⌕</div><strong>รอเชื่อมต่อข้อมูลโรงเรียน</strong><p>รายการโรงเรียนจะแสดงเมื่อเชื่อมต่อ Backend และฐานข้อมูลแล้ว</p></div>
+        </div>
+      </section>
+
+      <section class="page hidden" id="page-profile">
+        <div class="page-heading"><div><h1>ข้อมูลส่วนตัวของฉัน</h1><p>ข้อมูลบัญชีผู้ใช้งาน</p></div></div>
+        <div class="panel profile-panel"><div class="avatar avatar-large">น</div><div><h2>นางสาวบัญชา ใจดี</h2><p>ครูแนะแนว</p><p class="muted">ข้อมูลนี้เป็นตัวอย่าง UI ยังไม่ได้เชื่อมกับระบบบัญชี</p></div></div>
+      </section>
+
+      <footer class="footer">ระบบครูแนะแนว มหาวิทยาลัยแม่ฟ้าหลวง</footer>
+    </main>
+  </div>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  
+  <script src="app.js"></script>
+  <script src="api.js"></script>
+  <script src="ui.js"></script>
+</body>
+</html>
