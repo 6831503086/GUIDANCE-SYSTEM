@@ -43,11 +43,74 @@ const UI = (() => {
  function navIcon(page){const paths={posts:'M5 2h10l4 4v16H5zM8 10h8M8 14h6M8 18h4M15 2v5h4',results:'M3 3h16v11M3 8h10M3 13h5M3 3v18h8M21 21l-4-4M18 13a4 4 0 1 1-8 0 4 4 0 0 1 8 0','post-new':'M3 4h18v16H3zM6 16l4-5 4 3 3-4 3 6M9 8h.01',analysis:'M3 8h18v13H3zM5 8V4h14v4M3 13h18M10 12h4',reports:'M12 3v9h9M9 3a9 9 0 1 0 12 12','school-search':'M3 21V9h8v12M13 21V4h8v17M6 12h2M6 16h2M16 7h2M16 11h2M16 15h2M1 21h22',dashboard:'M3 11 12 3l9 8v10h-6v-6H9v6H3z','admin-dashboard':'M3 11 12 3l9 8v10h-6v-6H9v6H3z',calendar:'M4 5h16v16H4zM8 2v6M16 2v6M4 10h16',applicants:'M3 3h16v10M3 8h12M3 13h6M3 3v18h8M20 20l-4-4M17 13a4 4 0 1 1-8 0 4 4 0 0 1 8 0',profile:'M4 3h16v18H4zM9 15h6M8 18h8M14 8a2 2 0 1 1-4 0 2 2 0 0 1 4 0',schools:'M5 3h14v18H5zM8 6h2M14 6h2M8 10h2M14 10h2M8 14h2M14 14h2M10 21v-4h4v4',projects:'M5 2h9l5 5v14H5zM14 2v6h5M8 12h8M8 16h8',overview:'M3 4h18v16H3zM7 16v-4M12 16V8M17 16v-6'};return `<svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round" stroke-linecap="round" aria-hidden="true"><path d="${paths[page]||paths.overview}"/></svg>`;}
  function shell(){document.body.classList.remove('auth-mode');get('authRoot').classList.add('hidden');document.querySelector('.app-shell').classList.remove('hidden');document.querySelector('.side-nav').innerHTML=(state.role==='admin'?adminMenu:teacherMenu).map(([p,i,l])=>`<button class="nav-link ${p===state.page?'active':''}" data-ui="nav" data-target="${p}"><span class="nav-icon">${navIcon(p)}</span>${l}</button>`).join('');document.querySelector('.app-shell').classList.toggle('admin-ui',state.role==='admin');document.querySelector('.sidebar-user').innerHTML=`<button class="account-trigger" type="button" data-ui="account-menu" aria-haspopup="dialog" aria-label="เปิดเมนูบัญชี ${state.role==='admin'?'ผู้ดูแลระบบ':esc(state.profile.firstName+' '+state.profile.lastName)}"><span class="avatar">${state.role==='admin'?'A':'ค'}</span><span class="account-copy"><strong>${state.role==='admin'?'ผู้ดูแลระบบ':esc(state.profile.firstName+' '+state.profile.lastName)}</strong><span>${state.role==='admin'?'แอดมิน':'ครูแนะแนว'}</span></span><span class="account-chevron" aria-hidden="true">⌃</span></button>`;}
  function render(page=state.page){if(page==='publish')page='results';if(state.role==='admin')state.adminFilters={};if(state.role==='teacher'&&!teacherMenu.some(x=>x[0]===page)&&!['renew','project-detail','own-school-stats'].includes(page))page='dashboard';state.page=page;shell();document.querySelectorAll('.page').forEach(el=>el.classList.add('hidden'));const root=get('extendedPage');root.dataset.view=page;root.classList.remove('hidden');root.innerHTML=content(page);document.querySelector('.topbar strong').innerHTML='MFU'+(state.role==='teacher'?`<small class="header-school">${esc(ownSchool().name)}</small>`:'');if(page==='calendar')calendar();document.querySelectorAll('.nav-link').forEach(b=>b.classList.toggle('active',((b.dataset.target===page&&!(state.role==='admin'&&page==='post-new'&&state.editingPostId))||(state.role==='admin'&&((['admin-applicants'].includes(page)&&b.dataset.target==='results')||(page==='expired'&&b.dataset.target==='posts')||(page==='post-new'&&state.editingPostId&&b.dataset.target==='posts')||(page==='admin-students'&&b.dataset.target==='school-search')))||(page==='renew'&&b.dataset.target==='profile')||(page==='own-school-stats'&&b.dataset.target==='applicants'))));get('sidebar').classList.remove('open');window.scrollTo(0,0);}
- function legacyPostCards(){return `<div class="project-grid">${state.posts.filter(p=>!p.isHidden).map(p=>`<article class="project-card"><div class="tag-row">${tag(p.postType)}${tag('ประชาสัมพันธ์')}</div><h2>${esc(p.title)}</h2><p class="description">${esc(p.summary)}</p><div class="project-meta">ช่วงแสดงข่าว: ${esc(p.visibleStartDate)} – ${esc(p.visibleEndDate)}<p>${btn('อ่านรายละเอียดเพิ่มเติม','post-detail','btn-primary btn-block',`data-id="${p.postId}"`)}</p></div></article>`).join('')}</div>`;}
- function content(page){if(state.role==='admin'&&adminPageIds.includes(page))return adminContent(page);switch(page){
+function postCards(source = state.posts) {
+    const posts = source
+        .filter(post => !post.isHidden)
+        .sort((a, b) =>
+            Number(state.pins.includes(b.postId)) -
+            Number(state.pins.includes(a.postId))
+        );
+
+    if (posts.length === 0) {
+        return `
+            <div class="empty-state" role="status">
+                <strong>ยังไม่มีข่าวสารหรือประชาสัมพันธ์ในขณะนี้</strong>
+                <p>เมื่อมีข่าวสารที่เผยแพร่และอยู่ในช่วงแสดงผล จะแสดงที่นี่</p>
+            </div>
+        `;
+    }
+
+    return `
+        <div class="project-grid">
+            ${posts.map(post => `
+                <article class="project-card">
+                    <div class="card-title-row">
+                        <div class="tag-row">
+                            ${tag(post.postType)}
+                            ${tag('ประชาสัมพันธ์')}
+                        </div>
+                        ${pinButton(post.postId)}
+                    </div>
+                    <h2>${esc(post.title)}</h2>
+                    <p class="description">${esc(post.summary)}</p>
+                    <div class="project-meta">
+                        วันที่ประกาศ:
+                        ${esc(post.publishedAt?.slice(0, 10) || '')}
+                        <strong class="project-period">
+                            ช่วงประชาสัมพันธ์
+                            ${esc(post.visibleStartDate)} –
+                            ${esc(post.visibleEndDate)}
+                        </strong>
+                        ${btn(
+                            'อ่านรายละเอียดเพิ่มเติม',
+                            'post-detail',
+                            'btn-primary btn-block',
+                            `data-id="${post.postId}"`
+                        )}
+                    </div>
+                </article>
+            `).join('')}
+        </div>
+    `;
+} function content(page){if(state.role==='admin'&&adminPageIds.includes(page))return adminContent(page);switch(page){
  case 'dashboard':return heading('แดชบอร์ด','ข่าวสารและประชาสัมพันธ์สำหรับครูแนะแนว')+panel(postCards());
- case 'projects':return heading('โครงการสำหรับครูแนะแนว')+panel(`<form id="postFilter" class="filter-panel">${select('ประเภท','type',['ทั้งหมด','ประชาสัมพันธ์','กิจกรรม','ทุนการศึกษา'])}${field('ค้นหา','query')}<button class="btn btn-primary">ค้นหา</button></form><div id="filteredPosts">${postCards()}</div>`);
- case 'calendar':return calendarPage();
+case 'projects':
+    return heading('โครงการสำหรับครูแนะแนว') + panel(`
+        <form id="postFilter" class="filter-panel">
+            <label>
+                ประเภท
+                <select name="type">
+                    <option value="">ทั้งหมด</option>
+                    <option value="NEWS">ข่าวสาร</option>
+                    <option value="PR">ประชาสัมพันธ์</option>
+                    <option value="ANNOUNCEMENT">ประกาศ</option>
+                </select>
+            </label>
+            ${field('ค้นหา', 'query')}
+            <button class="btn btn-primary">ค้นหา</button>
+        </form>
+        <div id="filteredPosts">${postCards()}</div>
+    `); case 'calendar':return calendarPage();
  case 'applicants':return state.searchTab==='schools'?schoolLookup():applicantsPage();
  case 'unused-applicants':return heading('ค้นหาข้อมูลผู้สมัคร')+stats()+panel(`<form id="applicantFilter" class="filter-panel">${field('ชื่อ / รหัสผู้สมัคร','query')}${select('ปีการศึกษา','year',['2569','2568'])}${select('รอบสมัคร','round',['ทุกรอบ',...entryGroups.map(g=>g.entrygroupName)])}${select('สถานะ','status',['ทั้งหมด',...statuses.map(s=>s.description)])}<button class="btn btn-primary">ค้นหา</button>${btn('ส่งออก CSV','export-applicants')}</form><div id="selectionRows">${selectionTable(scope(selections))}</div>`);
  case 'overview':return teacherReportPage();case 'analysis':case 'reports': return reportPage(page);
@@ -77,60 +140,230 @@ const UI = (() => {
      return claims.role;
    }catch{throw new Error('Backend ส่ง Token ที่ไม่มีบทบาทหรือหมดอายุแล้ว');}
  }
- async function backendLogin(form,data){
-   if(loginPending)return;
-   const api=window.MfuApi;
-   if(!api?.login){toast('ไม่พบ API adapter กรุณาตรวจว่าโหลด api.js ก่อน ui.js');return;}
-   const attempt=++loginGeneration, chosenRole=authRole;
-   const button=form.querySelector('button[type="submit"],button.btn-primary');
-   const label=button?.textContent;
-   loginPending=true;if(button){button.disabled=true;button.textContent='กำลังเข้าสู่ระบบ…';}
-   const current=()=>attempt===loginGeneration&&get('authForm')===form&&state.auth==='login';
-   try{
-     const result=await api.login(data.email.trim(),data.password);
-     if(!current())return;
-     // Decode only for routing. The following protected API validates signature and authority.
-     const role=jwtLoginRole(result.token);
-     if(role!==(chosenRole==='admin'?'ADMIN':'TEACHER'))throw new Error('บัญชีนี้ไม่ตรงกับหน้าที่เลือก กรุณาเลือกหน้าล็อกอินให้ตรงกับบทบาทของบัญชี');
-     let profile;
-     if(role==='TEACHER'){
-       profile=await api.request('GuidanceTeacherController.getMyProfile');
-       if(!current())return;
-       if(!profile?.teacherId||!profile.school?.schoolId||!profile.school.name)throw new Error('ข้อมูลบัญชีหรือโรงเรียนจาก Backend ไม่ครบ');
-     }else{
-       await api.request('AdminDashboardController.getDashboard');
-       if(!current())return;
-     }
-     if(profile){
-       state.profile={...profile,schoolId:profile.school.schoolId,prefix:profile.prefix?.prefixName||profile.prefix?.name||'',positionTitle:'ครูแนะแนว'};
-       const index=schools.findIndex(s=>s.schoolId===profile.school.schoolId);
-       if(index<0)schools.push(profile.school);else schools[index]=profile.school;
-       // Do not display a previous demo school's cached edits as this account's school.
-       sessionStorage.removeItem('mfu.school');
-     }
-     state.role=role==='ADMIN'?'admin':'teacher';
-     form.elements.password.value='';
-     render(state.role==='admin'?'admin-dashboard':'dashboard');
-   }catch(error){
-     if(!current())return;
-     api.logout();
-     const message=error.status===401?'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง หรือบัญชียังไม่ยืนยันอีเมล':error.status===403?'บัญชีนี้ไม่มีสิทธิ์เข้าใช้งานส่วนนี้':error instanceof TypeError?'ติดต่อ Backend ไม่ได้ กรุณาตรวจว่าเซิร์ฟเวอร์กำลังรัน และเปิดเว็บจากพอร์ต Backend':error.message||'เข้าสู่ระบบไม่สำเร็จ';
-     toast(message);
-   }finally{
-     if(attempt===loginGeneration)loginPending=false;
-     if(button&&button.isConnected){button.disabled=false;button.textContent=label;}
-   }
- }
+async function backendLogin(form, data) {
+    if (loginPending) return;
 
+    const api = window.MfuApi;
+    if (!api?.login) {
+        toast('ไม่พบ API adapter กรุณาตรวจว่าโหลด api.js ก่อน ui.js');
+        return;
+    }
+
+    const attempt = ++loginGeneration;
+    const chosenRole = authRole;
+    const button = form.querySelector(
+        'button[type="submit"],button.btn-primary'
+    );
+    const label = button?.textContent;
+
+    loginPending = true;
+    if (button) {
+        button.disabled = true;
+        button.textContent = 'กำลังเข้าสู่ระบบ…';
+    }
+
+    const current = () =>
+        attempt === loginGeneration &&
+        get('authForm') === form &&
+        state.auth === 'login';
+
+    try {
+        const result = await api.login(data.email.trim(), data.password);
+        if (!current()) return;
+
+        const role = jwtLoginRole(result.token);
+        const expectedRole = chosenRole === 'admin' ? 'ADMIN' : 'TEACHER';
+
+        if (role !== expectedRole) {
+            throw new Error(
+                'บัญชีนี้ไม่ตรงกับหน้าที่เลือก กรุณาเลือกหน้าล็อกอินให้ตรงกับบทบาทของบัญชี'
+            );
+        }
+
+        let profile;
+        let posts;
+
+        if (role === 'TEACHER') {
+            profile = await api.request(
+                'GuidanceTeacherController.getMyProfile'
+            );
+            if (!current()) return;
+
+            if (
+                !profile?.teacherId ||
+                !profile.school?.schoolId ||
+                !profile.school.name
+            ) {
+                throw new Error('ข้อมูลบัญชีหรือโรงเรียนจาก Backend ไม่ครบ');
+            }
+
+            posts = await api.request('PostController.getAll');
+            if (!current()) return;
+
+            if (!Array.isArray(posts)) {
+                throw new Error('รูปแบบข้อมูลข่าวสารจาก Backend ไม่ถูกต้อง');
+            }
+        } else {
+    await api.request('AdminDashboardController.getDashboard');
+    if (!current()) return;
+
+    const adminPosts = await api.request('PostController.getAllForAdmin');
+    if (!current()) return;
+
+    if (!Array.isArray(adminPosts)) {
+        throw new Error('รูปแบบข้อมูลข่าวสารจาก Backend ไม่ถูกต้อง');
+    }
+
+    state.posts = adminPosts.map(post => ({
+        ...post,
+        uiDraft: post.publishedAt == null
+    }));
+}
+const calendarData = await api.request(
+    'CalendarController.getCalendarEvents'
+);
+if (!current()) return;
+
+if (!Array.isArray(calendarData)) {
+    throw new Error('รูปแบบข้อมูลปฏิทินจาก Backend ไม่ถูกต้อง');
+}
+
+state.calendarApiEvents = calendarData;
+if (role === 'TEACHER') {
+    const applicantData = await api.request(
+        'ApplicantController.searchStudents',
+        {
+            query: {
+                page: 0,
+                size: 5
+            }
+        }
+    );
+
+    if (!current()) return;
+
+    if (!Array.isArray(applicantData?.content) ||
+        !Number.isInteger(applicantData.currentPage) ||
+        !Number.isInteger(applicantData.totalPages) ||
+        !Number.isInteger(applicantData.totalItems)) {
+        throw new Error('รูปแบบข้อมูลผู้สมัครจาก Backend ไม่ถูกต้อง');
+    }
+
+    state.applicantSearchResult = applicantData;
+    state.applicantSearchKeyword = '';
+
+    const overview = await api.request(
+    'ApplicantOverviewReportController.getReport'
+);
+if (!current()) return;
+
+const overviewFields = [
+    'totalApplicants',
+    'eligibleForExamination',
+    'passedSelection',
+    'rightsConfirmed',
+    'rightsWaived',
+    'enrolled'
+];
+
+if (!overview || !overviewFields.every(key =>
+    Number.isInteger(overview[key]) && overview[key] >= 0
+)) {
+    throw new Error('รูปแบบข้อมูลสถิติผู้สมัครจาก Backend ไม่ถูกต้อง');
+}
+
+// Store only the totals needed by the statistic cards.
+state.applicantOverview = Object.fromEntries(
+    overviewFields.map(key => [key, overview[key]])
+);
+}
+        if (profile) {
+            state.profile = {
+                ...profile,
+                schoolId: profile.school.schoolId,
+                prefix: profile.prefix?.prefixName || profile.prefix?.name || '',
+                positionTitle: 'ครูแนะแนว'
+            };
+
+            const index = schools.findIndex(
+                school => school.schoolId === profile.school.schoolId
+            );
+
+            if (index < 0) {
+                schools.push(profile.school);
+            } else {
+                schools[index] = profile.school;
+            }
+
+            sessionStorage.removeItem('mfu.school');
+
+            // Use the API response, including an empty array.
+            state.posts = posts;
+        }
+
+        state.role = role === 'ADMIN' ? 'admin' : 'teacher';
+        form.elements.password.value = '';
+        render(state.role === 'admin' ? 'admin-dashboard' : 'dashboard');
+    } catch (error) {
+        if (!current()) return;
+
+        api.logout();
+
+        const message =
+            error.status === 401
+                ? 'อีเมลหรือรหัสผ่านไม่ถูกต้อง หรือบัญชียังไม่ยืนยันอีเมล'
+                : error.status === 403
+                ? 'บัญชีนี้ไม่มีสิทธิ์เข้าใช้งานส่วนนี้'
+                : error instanceof TypeError
+                ? 'ติดต่อ Backend ไม่ได้ กรุณาตรวจว่าเซิร์ฟเวอร์กำลังรัน และเปิดเว็บจากพอร์ต Backend'
+                : error.message || 'เข้าสู่ระบบไม่สำเร็จ';
+
+        toast(message);
+    } finally {
+        if (attempt === loginGeneration) {
+            loginPending = false;
+        }
+
+        if (button && button.isConnected) {
+            button.disabled = false;
+            button.textContent = label;
+        }
+    }
+}
  let authRole='teacher';
  function auth(view='login',role=authRole){loginGeneration++;loginPending=false;window.MfuApi?.logout();if(['register','password','sent','confirmed'].includes(view)){authRole='teacher';state.auth=view;referenceAuth(view);return;}get('authRoot').classList.remove('auth-reference');get('authRoot').removeAttribute('data-auth-step');authRole=role;state.auth=view;document.body.classList.add('auth-mode');document.querySelector('.app-shell').classList.add('hidden');get('authRoot').classList.remove('hidden');const titles={login:role==='admin'?'ระบบสำหรับผู้ดูแลระบบ (Admin)':'ระบบสำหรับครูแนะแนว มหาวิทยาลัยแม่ฟ้าหลวง',register:'ลงทะเบียนขอเข้าใช้งานระบบครูแนะแนว',reset:'ขอรับรหัสผ่านใหม่',password:'ตั้งรหัสผ่านเพื่อเข้าใช้งานระบบ',sent:'ส่งคำขอตัวอย่างสำเร็จ',confirmed:'ตัวอย่างหน้ายืนยันอีเมล'};get('authRoot').innerHTML=`<button class="btn btn-outline auth-switch" data-ui="switch-role">${role==='teacher'?'เข้าสู่ระบบสำหรับแอดมิน':'เข้าสู่ระบบสำหรับครูแนะแนว'}</button><section class="auth-card"><div class="auth-brand"><img src="assets/crest.png" alt="ตรามหาวิทยาลัยแม่ฟ้าหลวง"><p>มหาวิทยาลัยแม่ฟ้าหลวง<br><small>MAE FAH LUANG UNIVERSITY</small></p></div><h1>${titles[view]}</h1><p class="auth-subtitle">เข้าสู่ระบบเพื่อจัดการข้อมูลโควตาและประสานงานเครือข่าย</p>${view==='sent'?`<p>ในระบบจริงจะส่งลิงก์ไปยังอีเมล แต่โหมดนี้ไม่ได้ส่งอีเมล</p>${btn('ดูตัวอย่างหน้ายืนยันอีเมล','auth-confirm','btn-primary btn-block')}`:view==='confirmed'?`<div class="success-state">✓ หน้าตัวอย่างยืนยันอีเมล</div><p>ยังไม่มีการยืนยันบัญชีจริง</p>${btn('กลับเข้าสู่ระบบ','auth-login','btn-primary btn-block')}`:`<form id="authForm" class="form-grid">${view==='register'?select('จังหวัดโรงเรียน','province',['เชียงราย','เชียงใหม่'])+select('โรงเรียน','school',schools.filter(s=>s.subdistrict.district.province.name==='เชียงราย').map(s=>s.name))+select('คำนำหน้า','prefix',['นางสาว','นาง','นาย'])+field('ชื่อ','firstName','','text',true)+field('นามสกุล','lastName','','text',true)+field('ตำแหน่ง','positionTitle','','text',true)+field('โทรศัพท์','phone','','tel',true):''}${view==='reset' ? '' : ''}${view!=='password'?`<div class="full">${field('อีเมล','email','','email',true)}</div>`:''}${view==='login'||view==='password'?`<div class="full password-field">${field('รหัสผ่าน','password','','password',true,'minlength="8" autocomplete="'+(view==='password'?'new-password':'current-password')+'"')}${btn('◉','toggle-password','btn-outline','aria-label="แสดงรหัสผ่าน"')}</div>`:''}${view==='password'?`<div class="full">${field('ยืนยันรหัสผ่าน','confirm','','password',true,'minlength="8"')}</div><label class="check full"><input type="checkbox" required> ยอมรับเงื่อนไขและยินยอมตามนโยบาย PDPA</label>`:''}<button class="btn btn-primary full">${view==='login'?'เข้าสู่ระบบ':view==='register'?'ยื่นคำขอลงทะเบียน':view==='password'?'ยืนยันและยื่นคำขอ':'ยืนยันคำขอตัวอย่าง'}</button></form><div class="auth-links">${view==='login'?btn('ลืมรหัสผ่าน?','auth-reset'):btn('กลับเข้าสู่ระบบ','auth-login')}</div>`}<p class="auth-help">หากต้องการความช่วยเหลือ ติดต่อส่วนรับนักศึกษา<br>โทร. 0 5391 6103</p></section><footer>© 2026 Mae Fah Luang University. All rights reserved.<br>ส่วนรับนักศึกษา มหาวิทยาลัยแม่ฟ้าหลวง พัฒนาเพื่อการประสานงานโรงเรียนเครือข่ายครูแนะแนว</footer>`;if(view==='login'){const link=get('authRoot').querySelector('[data-ui="auth-reset"]');const label=get('authRoot').querySelector('.password-field label');if(link&&label){label.appendChild(link);link.classList.add('forgot-link');}get('authRoot').querySelector('.auth-links')?.remove();if(role==='teacher'){const line=document.createElement('div');line.className='auth-links';line.innerHTML='<span>ยังไม่มีบัญชี? </span>'+btn('คลิกเพื่อลงทะเบียนครูแนะแนว','auth-register','text-button');get('authForm').after(line);}get('authForm').elements.email.placeholder='example@yourdomain.com หรือชื่อผู้ใช้';get('authForm').elements.password.placeholder='กรอกรหัสผ่านเพื่อเข้าใช้งาน';}}
  function modal(title,body,actions=''){get('uiDialog').classList.remove('account-dialog','admin-school-drawer');if(state.role==='admin'&&title.includes('โรงเรียน'))get('uiDialog').classList.add('admin-school-drawer');get('uiDialog').innerHTML=`<div class="dialog-head"><h2>${title}</h2>${btn('×','close')}</div>${body}<div class="form-actions">${actions||btn('ปิด','close')}</div>`;get('uiDialog').showModal();}
  let returnFocus;const openModal=(...args)=>{returnFocus=document.activeElement;modal(...args);};
  function download(filename,headers,rows){const encode=v=>'"'+String(v??'').replace(/"/g,'""').replace(/^[=+@\-]/,"'$&")+'"';const csv='\ufeff'+[headers,...rows].map(r=>r.map(encode).join(',')).join('\r\n');const url=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));const a=document.createElement('a');a.href=url;a.download=filename;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}
- let month=new Date(2026,9,1);
+ let month = new Date();
+month = new Date(month.getFullYear(), month.getMonth(), 1);
  function deleteDialog(self){openModal(self?'ลบข้อมูลผู้ใช้?':'ลบบัญชีครูแนะแนว',`<p>ตัวอย่างการลบบัญชี ${esc(state.profile.firstName+' '+state.profile.lastName)}</p><p>ข้อมูลส่วนตัว รูปโปรไฟล์ และสิทธิ์การใช้งานจะถูกนำออกในขั้นตอนจริง</p><div class="notice">โหมดนี้เปลี่ยนเฉพาะข้อมูลจำลองในแท็บนี้</div><label class="check"><input id="deleteConsent" type="checkbox"> ฉันยอมรับเงื่อนไขการลบข้อมูลผู้ใช้</label>`,btn('ยกเลิก','close')+`<button disabled class="btn btn-primary" id="deleteConfirm" data-ui="delete-final" data-self="${self}">ยืนยัน (5)</button>`);let remaining=5;const timer=setInterval(()=>{remaining--;const b=get('deleteConfirm');if(!b||!get('uiDialog').open){clearInterval(timer);return;}b.textContent=remaining>0?`ยืนยัน (${remaining})`:'ยืนยัน';b.dataset.ready=remaining<=0?'true':'false';b.disabled=remaining>0||!get('deleteConsent').checked;if(!remaining)clearInterval(timer);},1000);}
- document.addEventListener('reset',e=>{if(e.target.id==='originalReportFilter'){state.originalReportFilters={};setTimeout(()=>get('originalReportResults').innerHTML=originalReportResults(),0);}if(e.target.id==='applicantFilter'){state.applicantFilters={};state.listPage=1;setTimeout(()=>{get('selectionRows').innerHTML=pagedSelections()},0);}if(e.target.id==='calendarFilter'){state.calendarFilters={};setTimeout(calendar,0);}});
- document.addEventListener('change',e=>{if(state.auth==='register'&&e.target.name==='province'&&e.target.closest('#authForm')){const target=get('authForm').elements.school;target.innerHTML='<option value="">เลือกโรงเรียน</option>'+schools.filter(s=>s.subdistrict.district.province.name===e.target.value).map(s=>`<option value="${esc(s.name)}">${esc(s.name)}</option>`).join('');target.disabled=!e.target.value;}if(state.role==='admin'&&state.page==='analysis'&&e.target.closest('#adminReportFilter'))get('adminReportFilter').requestSubmit();if(e.target.id==='renewConsent')get('renewConfirm').disabled=!e.target.checked;if(e.target.id==='autoRenew'){sessionStorage.setItem('mfu.autoRenew',JSON.stringify(e.target.checked));}if(e.target.id==='restoredPhoto'){const f=e.target.files[0];if(!f)return;if(!['image/png','image/jpeg'].includes(f.type)||f.size>5*1024*1024){toast('เลือกรูป JPG/PNG ไม่เกิน 5 MB');return;}const reader=new FileReader();reader.onload=()=>{state.profile.photo=reader.result;save('profile');render('profile');};reader.readAsDataURL(f);}if(e.target.id==='deleteConsent')get('deleteConfirm').disabled=!e.target.checked||get('deleteConfirm').dataset.ready!=='true';if(e.target.id==='photoInput'){const f=e.target.files[0];if(!f)return;if(!['image/png','image/jpeg'].includes(f.type)||f.size>5*1024*1024){toast('กรุณาเลือก JPG/PNG ไม่เกิน 5 MB');e.target.value='';return;}const url=URL.createObjectURL(f);get('profileAvatar').innerHTML=`<img alt="รูปโปรไฟล์ตัวอย่าง" src="${url}">`;setTimeout(()=>URL.revokeObjectURL(url),5000);}});
+document.addEventListener('reset', e => {
+    if (e.target.id === 'originalReportFilter') {
+        state.originalReportFilters = {};
+        setTimeout(() => {
+            get('originalReportResults').innerHTML = originalReportResults();
+        }, 0);
+    }
+
+    if (e.target.id === 'applicantFilter') {
+        const form = e.target;
+        state.applicantFilters = {};
+        state.listPage = 1;
+
+        setTimeout(() => {
+            if (get('applicantFilter') !== form) return;
+
+            // Reset finishes before submitting the cleared search.
+            form.requestSubmit();
+        }, 0);
+    }
+
+    if (e.target.id === 'calendarFilter') {
+        state.calendarFilters = {};
+        setTimeout(calendar, 0);
+    }
+}); document.addEventListener('change',e=>{if(state.auth==='register'&&e.target.name==='province'&&e.target.closest('#authForm')){const target=get('authForm').elements.school;target.innerHTML='<option value="">เลือกโรงเรียน</option>'+schools.filter(s=>s.subdistrict.district.province.name===e.target.value).map(s=>`<option value="${esc(s.name)}">${esc(s.name)}</option>`).join('');target.disabled=!e.target.value;}if(state.role==='admin'&&state.page==='analysis'&&e.target.closest('#adminReportFilter'))get('adminReportFilter').requestSubmit();if(e.target.id==='renewConsent')get('renewConfirm').disabled=!e.target.checked;if(e.target.id==='autoRenew'){sessionStorage.setItem('mfu.autoRenew',JSON.stringify(e.target.checked));}if(e.target.id==='restoredPhoto'){const f=e.target.files[0];if(!f)return;if(!['image/png','image/jpeg'].includes(f.type)||f.size>5*1024*1024){toast('เลือกรูป JPG/PNG ไม่เกิน 5 MB');return;}const reader=new FileReader();reader.onload=()=>{state.profile.photo=reader.result;save('profile');render('profile');};reader.readAsDataURL(f);}if(e.target.id==='deleteConsent')get('deleteConfirm').disabled=!e.target.checked||get('deleteConfirm').dataset.ready!=='true';if(e.target.id==='photoInput'){const f=e.target.files[0];if(!f)return;if(!['image/png','image/jpeg'].includes(f.type)||f.size>5*1024*1024){toast('กรุณาเลือก JPG/PNG ไม่เกิน 5 MB');e.target.value='';return;}const url=URL.createObjectURL(f);get('profileAvatar').innerHTML=`<img alt="รูปโปรไฟล์ตัวอย่าง" src="${url}">`;setTimeout(()=>URL.revokeObjectURL(url),5000);}});
  document.addEventListener('click',e=>{const b=e.target.closest('[data-ui]');if(!b)return;const action=b.dataset.ui;switch(action){
  case 'nav':if(b.dataset.target==='post-new')state.editingPostId=null;render(b.dataset.target);calendar();break;
  case 'logout':window.MfuApi?.logout();get('uiDialog').close();auth('login',state.role);break;case 'admin-export-options':openModal('ดาวน์โหลดรายงาน',`<p>เลือกรูปแบบรายงานตามตัวกรองที่แสดงอยู่</p>`,btn('ส่งออก CSV','export-interests','btn-primary')+btn('พิมพ์ / บันทึก PDF','admin-print'));break;case 'admin-print':get('uiDialog').close();window.print();break;case 'account-menu':openModal(state.role==='admin'?'บัญชีผู้ดูแลระบบ':esc(userName()),`<div class="account-popup"><div class="avatar">${state.role==='admin'?'A':'ค'}</div><strong>${state.role==='admin'?'ผู้ดูแลระบบ':esc(userName())}</strong><p>${state.role==='admin'?'แอดมิน':esc(ownSchool().name)}</p></div>`,btn('ปิด','close')+btn('ออกจากระบบ','logout','btn-primary'));get('uiDialog').classList.add('account-dialog');break;
@@ -157,7 +390,121 @@ const UI = (() => {
  case 'export-interests':download('program-interest-demo.csv',['programId','programName','interestedApplicants'],programs.map(p=>[p.programId,p.programName,(state.role==='admin'?adminInterests():scope(interests)).filter(i=>i.program.programId===p.programId).length]));break;
  case 'print':window.print();break;
  case 'month-prev':month.setMonth(month.getMonth()-1);calendar();break;case 'month-next':month.setMonth(month.getMonth()+1);calendar();break;case 'month-today':month=new Date();month.setDate(1);calendar();break;
- case 'admin-save-draft':{const f=get('postForm');f.elements.uiDraft.value='true';f.elements.visibleStartDate.required=false;f.elements.visibleEndDate.required=false;f.requestSubmit();break;}case 'admin-hide-post':{const p=state.posts.find(x=>x.postId===+b.dataset.id);p.isHidden=!p.isHidden;save('posts');adminPostDetail(p.postId);break;}case 'admin-applicant-page':state.adminApplicantPage=+b.dataset.number;get('adminApplicantRows').innerHTML=adminApplicantTable();break;case 'admin-post-page':state.adminPostPage=+b.dataset.number;get('postRows').innerHTML=adminPostRows(state.adminFilteredPosts);break;case 'list-page':state.listPage=+b.dataset.number;get('selectionRows').innerHTML=pagedSelections();break;case 'calendar-day':showEvent(b.dataset.date);break;case 'chart-detail':chartDetail(b.dataset);break;
+ case 'admin-save-draft':{const f=get('postForm');f.elements.uiDraft.value='true';f.elements.visibleStartDate.required=false;f.elements.visibleEndDate.required=false;f.requestSubmit();break;}case 'admin-hide-post': {
+    if (state.role !== 'admin' || b.disabled) break;
+
+    const post = state.posts.find(
+        item => item.postId === Number(b.dataset.id)
+    );
+
+    if (!post) {
+        toast('ไม่พบข่าวที่ต้องการ');
+        break;
+    }
+
+    b.disabled = true;
+
+    void (async () => {
+        try {
+            const saved = await window.MfuApi.request(
+                post.isHidden
+                    ? 'PostController.show'
+                    : 'PostController.hide',
+                { params: { id: post.postId } }
+            );
+
+            if (saved?.postId !== post.postId ||
+                typeof saved.isHidden !== 'boolean') {
+                throw new Error('ข้อมูลสถานะข่าวจาก Backend ไม่ถูกต้อง');
+            }
+
+            state.posts = state.posts.map(item =>
+                item.postId === saved.postId
+                    ? { ...saved, uiDraft: saved.publishedAt == null }
+                    : item
+            );
+
+            if (state.role === 'admin' &&
+                state.page === 'project-detail' &&
+                state.selectedPost === saved.postId) {
+                adminPostDetail(saved.postId);
+            }
+
+            toast(saved.isHidden
+                ? 'ซ่อนข่าวในฐานข้อมูลแล้ว'
+                : 'แสดงข่าวในฐานข้อมูลแล้ว'
+            );
+        } catch (error) {
+            toast(error.message || 'เปลี่ยนสถานะข่าวไม่สำเร็จ');
+        } finally {
+            b.disabled = false;
+        }
+    })();
+
+    break;
+}case 'admin-applicant-page':state.adminApplicantPage=+b.dataset.number;get('adminApplicantRows').innerHTML=adminApplicantTable();break;case 'admin-post-page':state.adminPostPage=+b.dataset.number;get('postRows').innerHTML=adminPostRows(state.adminFilteredPosts);break;case 'list-page': {
+    if (state.role !== 'teacher' || b.disabled) break;
+
+    const page = Number(b.dataset.number);
+    const previous = state.applicantSearchResult;
+    const form = get('applicantFilter');
+
+    if (!form || !previous ||
+        !Number.isInteger(page) ||
+        page < 0 || page >= previous.totalPages) {
+        break;
+    }
+
+    const version = (state.applicantSearchVersion || 0) + 1;
+    state.applicantSearchVersion = version;
+    b.disabled = true;
+
+    void (async () => {
+        try {
+            const result = await window.MfuApi.request(
+                'ApplicantController.searchStudents',
+                {
+                    query: {
+                        keyword: state.applicantSearchKeyword || '',
+                        page,
+                        size: previous.pageSize
+                    }
+                }
+            );
+
+            if (version !== state.applicantSearchVersion ||
+                state.role !== 'teacher' ||
+                get('applicantFilter') !== form) {
+                return;
+            }
+
+            if (!Array.isArray(result?.content) ||
+                !Number.isInteger(result.currentPage) ||
+                !Number.isInteger(result.totalPages) ||
+                !Number.isInteger(result.totalItems)) {
+                throw new Error('รูปแบบข้อมูลผู้สมัครจาก Backend ไม่ถูกต้อง');
+            }
+
+            state.applicantSearchResult = result;
+            get('selectionRows').innerHTML = pagedSelections();
+        } catch (error) {
+            if (version === state.applicantSearchVersion &&
+                get('applicantFilter') === form) {
+                toast(error.message || 'โหลดหน้าผู้สมัครไม่สำเร็จ');
+            }
+        } finally {
+            if (b.isConnected) b.disabled = false;
+
+            const searchButton = form.querySelector('button.btn-primary');
+            if (version === state.applicantSearchVersion &&
+                searchButton?.isConnected) {
+                searchButton.disabled = false;
+            }
+        }
+    })();
+
+    break;
+}case 'calendar-day':showEvent(b.dataset.date);break;case 'chart-detail':chartDetail(b.dataset);break;
  }});
  document.addEventListener('submit',async e=>{const form=e.target;if(!['authForm','profileForm','postForm','schoolForm','otpForm','renewForm','applicantFilter','postFilter','adminPostFilter','schoolFilter','reportFilter','calendarFilter','directorForm','originalReportFilter','ownSchoolFilter','adminReportFilter','adminDashboardFilter','adminResultFilter','adminApplicantFilter','adminStudentFilter'].includes(form.id))return;e.preventDefault();const d=Object.fromEntries(new FormData(form));switch(form.id){
  case 'adminDashboardFilter':state.dashboardFilters=d;get('adminDashboardData').innerHTML=adminDashboardData({drafts:state.posts.filter(p=>p.uiDraft).length});break;case 'adminResultFilter':state.adminFilters=d;get('adminResultData').innerHTML=adminResultsData(d);break;case 'adminApplicantFilter':state.adminApplicantPage=1;state.adminFilters=d;get('adminApplicantRows').innerHTML=adminApplicantRows(d);break;case 'adminStudentFilter':get('adminStudentRows').innerHTML=selectionTable(selections.filter(s=>(!d.query||(s.applicant.firstName+' '+s.applicant.lastName+' '+s.applicant.applicantId).includes(d.query))&&(d.school==='ทุกโรงเรียน'||s.applicant.school.name===d.school)));break;case 'adminReportFilter':state.adminFilters=d;if(state.page==='analysis'){const ints=adminInterests();state.chartInterests=ints;state.chartCohort=adminScope();get('adminAnalysisData').innerHTML=adminAnalysisData(adminRanking(ints),ints,[...new Set(programs.map(p=>p.faculty))]);}else get('adminReportData').innerHTML=adminSystemReport();break;case 'originalReportFilter':state.reportListPage=1;state.originalReportFilters=d;get('originalReportResults').innerHTML=originalReportResults();break;case 'ownSchoolFilter':get('ownSchoolRows').innerHTML=ownSchoolRows(d);break;case 'directorForm':{const f=form.elements.photo.files[0];if(f&&(!['image/png','image/jpeg'].includes(f.type)||f.size>2*1024*1024)){toast('เลือกรูป PNG/JPG ไม่เกิน 2 MB');return;}if(d.endDate&&d.startDate&&d.endDate<d.startDate){toast('วันสิ้นสุดต้องอยู่หลังวันเริ่ม');return;}if(f){d.photoPreview=await new Promise((resolve,reject)=>{const r=new FileReader();r.onload=()=>resolve(r.result);r.onerror=reject;r.readAsDataURL(f);});}else d.photoPreview=read('director-'+ownSchool().schoolId,{}).photoPreview||'';delete d.photo;sessionStorage.setItem('mfu.director-'+ownSchool().schoolId,JSON.stringify(d));toast('บันทึกข้อมูลผู้อำนวยการแล้ว');break;}
@@ -204,14 +551,212 @@ case 'authForm':
         auth('sent');
     }
     break; case 'profileForm':state.profile={...state.profile,...Object.fromEntries(['prefix','firstName','lastName','positionTitle','email','phone'].map(k=>[k,d[k]]))};save('profile');render('profile');toast('บันทึกโปรไฟล์ตัวอย่างแล้ว');break;
- case 'postForm':{if((d.eventStartDate&&d.eventEndDate&&d.eventEndDate<d.eventStartDate)||d.visibleEndDate<d.visibleStartDate){toast('วันสิ้นสุดต้องไม่อยู่ก่อนวันเริ่มต้น');return;}const id=+d.postId||Math.max(0,...state.posts.map(p=>p.postId))+1;const p={...d,summary:d.summary||d.content.slice(0,160),uiDraft:d.uiDraft==='true'&&!e.submitter?.dataset.publish,postId:id,isHidden:d.isHidden==='ซ่อน',publishedAt:new Date().toISOString(),admin:{adminId:1}};state.posts=state.posts.some(p=>p.postId===id)?state.posts.map(old=>old.postId===id?p:old):[p,...state.posts];save('posts');render('posts');toast('บันทึกข่าวตัวอย่างแล้ว');break;}
- case 'schoolForm':{const old=read('school',ownSchool());const photo=form.elements.schoolPhoto?.files[0];if(photo&&(!['image/png','image/jpeg'].includes(photo.type)||photo.size>2*1024*1024)){toast('เลือกรูปโรงเรียน PNG/JPG ไม่เกิน 2 MB');return;}let image=old.photo;if(photo)image=await new Promise(resolve=>{const r=new FileReader();r.onload=()=>resolve(r.result);r.readAsDataURL(photo);});sessionStorage.setItem('mfu.school',JSON.stringify({...old,name:old.name,schoolCode:old.schoolCode,schoolType:d.schoolType,email:d.email,phone:d.phone,photo:image}));toast('บันทึกข้อมูลโรงเรียนแล้ว');render('schools');break;}
+case 'postForm': {
+    if (state.role !== 'admin') {
+        toast('เฉพาะผู้ดูแลระบบเท่านั้นที่บันทึกข่าวได้');
+        break;
+    }
+
+    if (form.dataset.saving === 'true') break;
+
+    const saveDraft =
+        d.uiDraft === 'true' && !e.submitter?.dataset.publish;
+
+    const id = d.postId ? Number(d.postId) : null;
+    const existing = id
+        ? state.posts.find(post => post.postId === id)
+        : null;
+
+    if (id && !existing) {
+        toast('ไม่พบข่าวที่ต้องการแก้ไข กรุณาโหลดรายการใหม่');
+        break;
+    }
+
+    if (saveDraft && existing?.publishedAt != null) {
+        toast('ข่าวนี้เผยแพร่แล้ว ยังไม่ได้เชื่อมต่อการเปลี่ยนกลับเป็นฉบับร่าง');
+        break;
+    }
+
+    if (d.isHidden === 'ซ่อน') {
+        toast('ยังไม่ได้เชื่อมต่อการซ่อนข่าว กรุณาเลือกแสดงบนเว็บไซต์สำหรับขั้นตอนนี้');
+        break;
+    }
+
+    if ([d.venue, d.subdistrict, d.district, d.province, d.zipcode]
+        .some(value => String(value || '').trim())) {
+        toast('ยังไม่ได้เชื่อมต่อข้อมูลสถานที่ กรุณาเว้นช่องสถานที่ไว้สำหรับการทดสอบนี้');
+        break;
+    }
+
+    const body = {
+        title: (d.title || '').trim(),
+        summary: (d.summary || '').trim(),
+        content: (d.content || '').trim(),
+        targetAudience: (d.targetAudience || '').trim(),
+        postType: (d.postType || '').trim().toUpperCase(),
+        eventType: (d.eventType || '').trim() || null,
+        eventStartDate: d.eventStartDate || null,
+        eventEndDate: d.eventEndDate || null,
+        visibleStartDate: d.visibleStartDate || null,
+        visibleEndDate: d.visibleEndDate || null,
+        academicYear: existing?.academicYear ?? null,
+        applicationRound: existing?.applicationRound ?? null
+    };
+
+    if (!saveDraft && (
+        !body.title ||
+        !body.summary ||
+        !body.content ||
+        !body.targetAudience ||
+        !body.visibleStartDate ||
+        !body.visibleEndDate
+    )) {
+        toast('กรุณากรอกชื่อเรื่อง สรุป เนื้อหา กลุ่มเป้าหมาย และช่วงแสดงผลให้ครบ');
+        break;
+    }
+
+    if (
+        (body.eventStartDate && body.eventEndDate &&
+            body.eventEndDate < body.eventStartDate) ||
+        (body.visibleStartDate && body.visibleEndDate &&
+            body.visibleEndDate < body.visibleStartDate)
+    ) {
+        toast('วันสิ้นสุดต้องไม่อยู่ก่อนวันเริ่มต้น');
+        break;
+    }
+
+    const buttons = [...form.querySelectorAll('button')];
+    const previousDisabled = buttons.map(button => button.disabled);
+    let savedToDatabase = false;
+
+    const rememberPost = post => {
+        state.posts = [
+            { ...post, uiDraft: post.publishedAt == null },
+            ...state.posts.filter(item => item.postId !== post.postId)
+        ];
+    };
+
+    form.dataset.saving = 'true';
+    buttons.forEach(button => button.disabled = true);
+
+    try {
+        let saved = await window.MfuApi.request(
+            id ? 'PostController.update' : 'PostController.create',
+            {
+                ...(id ? { params: { id } } : {}),
+                body
+            }
+        );
+
+        if (!saved?.postId) {
+            throw new Error('Backend ไม่ส่งรหัสข่าวกลับมา');
+        }
+
+        savedToDatabase = true;
+        form.elements.postId.value = saved.postId;
+        rememberPost(saved);
+
+        // Publish drafts only. Editing published content keeps its timestamp.
+        if (!saveDraft && saved.publishedAt == null) {
+            saved = await window.MfuApi.request(
+                'PostController.publish',
+                { params: { id: saved.postId } }
+            );
+
+            if (!saved?.postId || !saved.publishedAt) {
+                throw new Error('Backend ไม่ยืนยันสถานะเผยแพร่');
+            }
+
+            rememberPost(saved);
+        }
+
+        render('posts');
+        toast(saveDraft
+            ? 'บันทึกฉบับร่างลงฐานข้อมูลแล้ว'
+            : 'บันทึกข่าวที่เผยแพร่ลงฐานข้อมูลแล้ว'
+        );
+    } catch (error) {
+        const message = error.message || 'ดำเนินการไม่สำเร็จ';
+
+        toast(savedToDatabase
+            ? 'บันทึกข้อมูลแล้ว แต่ขั้นตอนถัดไปไม่สำเร็จ: ' + message
+            : message
+        );
+    } finally {
+        delete form.dataset.saving;
+        buttons.forEach((button, index) => {
+            button.disabled = previousDisabled[index];
+        });
+    }
+
+    break;
+} case 'schoolForm':{const old=read('school',ownSchool());const photo=form.elements.schoolPhoto?.files[0];if(photo&&(!['image/png','image/jpeg'].includes(photo.type)||photo.size>2*1024*1024)){toast('เลือกรูปโรงเรียน PNG/JPG ไม่เกิน 2 MB');return;}let image=old.photo;if(photo)image=await new Promise(resolve=>{const r=new FileReader();r.onload=()=>resolve(r.result);r.readAsDataURL(photo);});sessionStorage.setItem('mfu.school',JSON.stringify({...old,name:old.name,schoolCode:old.schoolCode,schoolType:d.schoolType,email:d.email,phone:d.phone,photo:image}));toast('บันทึกข้อมูลโรงเรียนแล้ว');render('schools');break;}
  case 'otpForm':{const doc=form.elements.document?.files[0];if(doc&&(!['application/pdf','image/jpeg','image/png'].includes(doc.type)||doc.size>5*1024*1024)){toast('เอกสารต้องเป็น PDF/JPG/PNG ไม่เกิน 5 MB');return;}}if(d.otp!=='123456'){toast('รหัสตัวอย่างไม่ถูกต้อง ใช้ 123456');return;}state.renewal=3;render('renew');break;
  case 'renewForm':state.renewDraft={firstName:d.firstName,lastName:d.lastName,phone:d.phone,positionTitle:d.positionTitle,email:d.email};openModal('ยืนยันการต่ออายุการใช้งาน?',`<p>กรุณาตรวจสอบรายละเอียดสิทธิ์การใช้งานก่อนยืนยัน</p><div class="renewal-summary"><p>ปีการศึกษา ${state.profile.activeAcademicYear+1}</p><p>สิ้นสุด ${dateThai(state.profile.activeAcademicYear+1)}</p><p>ค่าธรรมเนียม: ไม่มีค่าใช้จ่าย</p></div><h3>ข้อตกลงและเงื่อนไขการใช้งาน</h3><p class="muted">ข้อมูลใช้เพื่อยืนยันสิทธิ์การใช้งานและการประสานงานโรงเรียนเครือข่าย ตามนโยบายคุ้มครองข้อมูลส่วนบุคคล</p><label class="check"><input type="checkbox" id="renewConsent"> ข้าพเจ้ายอมรับข้อกำหนดและเงื่อนไข</label>`,btn('กลับไปตรวจสอบ','close')+btn('ยืนยัน','renew-confirm','btn-primary','id="renewConfirm" disabled'));break;
- case 'applicantFilter':state.applicantFilters=d;state.listPage=1;get('selectionRows').innerHTML=pagedSelections();break;
- case 'unused-applicantFilter':get('selectionRows').innerHTML=selectionTable(scope(selections).filter(s=>(s.applicant.firstName+' '+s.applicant.lastName+' '+s.applicant.applicantId).includes(d.query.trim())&&s.applicant.academicYear===+d.year&&(!d.round||d.round==='ทุกรอบ'||d.round===s.entryGroup.entrygroupName)&&(d.status==='ทั้งหมด'||d.status===s.status.description)));break;
- case 'postFilter':{const list=state.posts.filter(p=>!p.isHidden&&p.title.includes(d.query)&&(d.type==='ทั้งหมด'||p.postType===d.type));get('filteredPosts').innerHTML=postTable(list);break;}
- case 'adminPostFilter':state.adminPostPage=1;get('postRows').innerHTML=adminPostRows(state.posts.filter(p=>p.title.includes(d.query)&&(d.visible==='ทั้งหมด'||adminPostStatus(p)===d.visible)&&(d.period!=='30 วันล่าสุด'||new Date(p.publishedAt)>=new Date(Date.now()-30*864e5))));break;case 'unused-adminPostFilter':get('postRows').innerHTML=postTable(state.posts.filter(p=>p.title.includes(d.query)&&(d.visible==='ทั้งหมด'||(d.visible==='ซ่อน')===p.isHidden)&&(state.page!=='expired'||p.visibleEndDate<new Date().toISOString().slice(0,10))));break;
+case 'applicantFilter': {
+    const keyword = (d.query || '').trim();
+    const requestVersion = (state.applicantSearchVersion || 0) + 1;
+    state.applicantSearchVersion = requestVersion;
+
+    const button = form.querySelector('button.btn-primary');
+    if (button) button.disabled = true;
+
+    try {
+        const result = await window.MfuApi.request(
+            'ApplicantController.searchStudents',
+            {
+                query: {
+                    keyword,
+                    page: 0,
+                    size: 5
+                }
+            }
+        );
+
+        if (requestVersion !== state.applicantSearchVersion) break;
+        if (state.role !== 'teacher' || state.auth !== 'login') break;
+
+        if (!Array.isArray(result?.content) ||
+            !Number.isInteger(result.currentPage) ||
+            !Number.isInteger(result.totalPages) ||
+            !Number.isInteger(result.totalItems)) {
+            throw new Error('รูปแบบข้อมูลผู้สมัครจาก Backend ไม่ถูกต้อง');
+        }
+
+        state.applicantSearchResult = result;
+        state.applicantSearchKeyword = keyword;
+
+        if (get('applicantFilter') === form && get('selectionRows')) {
+            get('selectionRows').innerHTML = pagedSelections();
+        }
+    } catch (error) {
+        if (requestVersion === state.applicantSearchVersion &&
+            get('applicantFilter') === form) {
+            toast(error.message || 'ค้นหาผู้สมัครไม่สำเร็จ');
+        }
+    } finally {
+        if (button && button.isConnected &&
+            requestVersion === state.applicantSearchVersion) {
+            button.disabled = false;
+        }
+    }
+
+    break;
+} case 'unused-applicantFilter':get('selectionRows').innerHTML=selectionTable(scope(selections).filter(s=>(s.applicant.firstName+' '+s.applicant.lastName+' '+s.applicant.applicantId).includes(d.query.trim())&&s.applicant.academicYear===+d.year&&(!d.round||d.round==='ทุกรอบ'||d.round===s.entryGroup.entrygroupName)&&(d.status==='ทั้งหมด'||d.status===s.status.description)));break;
+case 'postFilter': {
+    const query = (d.query || '').trim().toLowerCase();
+
+    const posts = state.posts.filter(post =>
+        !post.isHidden &&
+        (!d.type || d.type === 'ทั้งหมด' || post.postType === d.type) &&
+        (!query || [post.title, post.summary, post.content].some(value =>
+            String(value || '').toLowerCase().includes(query)
+        ))
+    );
+
+    get('filteredPosts').innerHTML = postCards(posts);
+    break;
+} case 'adminPostFilter':state.adminPostPage=1;get('postRows').innerHTML=adminPostRows(state.posts.filter(p=>p.title.includes(d.query)&&(d.visible==='ทั้งหมด'||adminPostStatus(p)===d.visible)&&(d.period!=='30 วันล่าสุด'||new Date(p.publishedAt)>=new Date(Date.now()-30*864e5))));break;case 'unused-adminPostFilter':get('postRows').innerHTML=postTable(state.posts.filter(p=>p.title.includes(d.query)&&(d.visible==='ทั้งหมด'||(d.visible==='ซ่อน')===p.isHidden)&&(state.page!=='expired'||p.visibleEndDate<new Date().toISOString().slice(0,10))));break;
  case 'schoolFilter':get('schoolRows').innerHTML=schoolTable(schools.filter(s=>s.name.includes(d.query)&&(d.province==='ทุกจังหวัด'||s.subdistrict.district.province.name===d.province)));break;
  case 'reportFilter':{state.reportFilters=d;get('reportCharts').innerHTML=managementAnalytics(d);return;}
  case 'unused-reportFilter':{const list=+d.year===2569?scope(interests).filter(i=>d.school==='ทุกโรงเรียน'||i.applicant.school.name===d.school):[];get('reportCharts').innerHTML=bars('ความสนใจหลักสูตร · '+esc(d.year),programs.map(p=>p.programName),programs.map(p=>list.filter(i=>i.program.programId===p.programId).length));break;}
@@ -232,18 +777,366 @@ case 'authForm':
  }
  function reportPage(page){state.reportFilters={};return heading(page==='analysis'?'วิเคราะห์ความสนใจหลักสูตร':page==='reports'?'รายงานภาพรวมระดับระบบ':'รายงานภาพรวมผู้สมัคร','สรุปข้อมูลการสมัครและผลตอบรับ เพื่อประกอบการตัดสินใจ')+panel(`<form id="reportFilter" class="filter-panel">${select('ปีการศึกษา','year',['2569','2568'])}${select('รอบรับสมัคร','round',['ทุกรอบ',...entryGroups.map(g=>g.entrygroupName)])}${state.role==='admin'?select('โรงเรียน','school',['ทุกโรงเรียน',...schools.map(s=>s.name)]):''}<button class="btn btn-primary">แสดงรายงาน</button>${btn('ส่งออกข้อมูล','export-applicants')}${btn('พิมพ์รายงาน / PDF','print')}</form>`)+`<div id="reportCharts">${managementAnalytics()}</div>`;}
  function chartDetail(d){let list=state.chartCohort||scope(selections);const v=d.value;if(d.key==='status')list=list.filter(s=>s.status.statusCode===v.split(' · ')[0]);else if(d.key==='round')list=list.filter(s=>s.entryGroup.entrygroupName===v);else if(d.key==='school')list=list.filter(s=>s.applicant.school.name===v);else if(d.key==='program'||d.key==='faculty'){const ids=new Set((state.chartInterests||scope(interests)).filter(i=>d.key==='program'?i.program.programName===v:i.program.faculty===v).map(i=>i.applicant.applicantId));list=list.filter(s=>ids.has(s.applicant.applicantId));}else if(d.key==='stage')list=list.filter(s=>v==='สมัครเข้าศึกษา'?true:v==='มีสิทธิ์สอบ/สัมภาษณ์'?['20','21','22','23','24','25','26','27','28'].includes(s.status.statusCode):v==='ได้รับการคัดเลือก'?['40','41','42','43','50'].includes(s.status.statusCode):s.status.statusCode==='50');else if(d.key==='week')list=list.filter(s=>'สัปดาห์ที่ '+(Math.min(3,Math.floor((new Date(s.appliedAt).getDate()-1)/7))+1)===v);else if(d.key==='year')list=list.filter(s=>String(s.applicant.academicYear)===v);else if(d.key==='outcome')list=list.filter(s=>v==='ชำระแล้ว'?s.status.statusCode==='50':v==='สละสิทธิ์'?s.status.statusCode==='42':['40','41','43'].includes(s.status.statusCode));else if(d.key==='registration')list=list.filter(s=>v==='ชำระแล้ว'?s.status.statusCode==='50':v==='ได้รับคัดเลือก ยังไม่ชำระ'?['40','41','42','43'].includes(s.status.statusCode):!['40','41','42','43','50'].includes(s.status.statusCode));openModal(esc(v),`<p>จำนวน ${list.length} คน</p>${selectionTable(list)}`);}
- function postCards(){return `<div class="project-grid">${state.posts.filter(p=>!p.isHidden).sort((a,b)=>Number(state.pins.includes(b.postId))-Number(state.pins.includes(a.postId))).map(p=>`<article class="project-card"><div class="card-title-row"><div class="tag-row">${tag(p.postType)}${tag(p.isHidden?'ซ่อน':'ประชาสัมพันธ์')}</div>${pinButton(p.postId)}</div><h2>${esc(p.title)}</h2><p class="description">${esc(p.summary)}</p><div class="project-meta">วันที่ประกาศ: ${esc(p.publishedAt?.slice(0,10)||'')}<strong class="project-period">ช่วงประชาสัมพันธ์ ${esc(p.visibleStartDate)} – ${esc(p.visibleEndDate)}</strong>${btn('อ่านรายละเอียดเพิ่มเติม','post-detail','btn-primary btn-block',`data-id="${p.postId}"`)}</div></article>`).join('')}</div>`;}
  function postDetail(id){if(state.role==='admin'){adminPostDetail(id);return;}const p=state.posts.find(x=>x.postId===+id);if(!p)return;state.page='project-detail';state.selectedPost=p.postId;get('extendedPage').innerHTML=(state.role==='teacher'?`<div class="school-context">${esc(ownSchool().name)}</div>`:'')+heading('รายละเอียดข่าว')+`<div class="detail-layout">${panel(`<div class="card-title-row">${tag(p.postType)}${pinButton(p.postId)}</div><h1>${esc(p.title)}</h1><div class="detail-date">ช่วงประชาสัมพันธ์ ${esc(p.visibleStartDate)} – ${esc(p.visibleEndDate)}</div><div class="detail-copy preserved">${esc(p.content)}</div>`)}${panel(`<h3>สอบถามข้อมูลโครงการ</h3><p>ส่วนรับนักศึกษา</p><p>โทร. 0 5391 6103</p>${state.role==='admin'?btn('แก้ไขข่าว','post-edit','btn-primary',`data-id="${p.postId}"`):''}<p>${btn('กลับหน้าข่าว','nav','btn-outline',`data-target="${state.role==='admin'?'posts':'dashboard'}"`)}</p>`)}</div>`;}
- function calendarPage(){return heading('ปฏิทินกำหนดการรับสมัคร','ติดตามกำหนดการ TCAS')+panel(`<form id="calendarFilter" class="filter-panel">${select('ปีการศึกษา','year',['2569','2568'])}${select('รอบการสมัคร','round',['ทุกรอบ',...entryGroups.map(g=>g.entrygroupName)])}${field('ค้นหาชื่อโครงการ','query')}<button type="reset" class="btn btn-outline">ล้างตัวกรอง</button><button class="btn btn-primary">ค้นหา</button></form>`)+`<div class="calendar-layout">${panel(`<div class="calendar-toolbar"><h2 id="newMonth"></h2><div>${btn('‹','month-prev')}${btn('วันนี้','month-today')}${btn('›','month-next')}</div></div><div class="calendar-grid" id="newCalendar"></div><div class="calendar-legend">● เปิดรับสมัคร　 ● ปิดรับสมัคร　 ● ประกาศผล　 ● ยืนยันสิทธิ์</div><p class="calendar-foot">เลือกกำหนดการในปฏิทินหรือรายการด้านขวาเพื่อดูรายละเอียด</p>`)}${panel('<h2>กำหนดการ</h2><div id="upcomingEvents"></div><h2 class="event-divider">รายละเอียดกำหนดการ</h2><div id="eventDetail" class="event-empty">เลือกกำหนดการเพื่อดูรายละเอียด</div>')}</div>`;}
- function calendarEvents(){const f=state.calendarFilters||{};return entryGroups.filter(g=>(!f.year||+f.year===g.academicYear)&&(!f.round||f.round==='ทุกรอบ'||f.round===g.entrygroupName)&&(!f.query||g.entrygroupName.toLowerCase().includes(f.query.toLowerCase()))).flatMap(g=>[['applyStartDate','เปิดรับสมัคร'],['applyEndDate','ปิดรับสมัคร'],['resultAnnounceDate','ประกาศผล'],['rightsConfirmDate','ยืนยันสิทธิ์']].map(([k,title],i)=>({date:g[k],title,round:g.entrygroupName,color:i})));}
- function calendar(){if(!get('newCalendar'))return;const events=calendarEvents();get('newMonth').textContent=month.toLocaleDateString('th-TH',{month:'long',year:'numeric'});let html=['อา.','จ.','อ.','พ.','พฤ.','ศ.','ส.'].map(d=>`<div class="calendar-cell day-name">${d}</div>`).join('');for(let i=0;i<new Date(month.getFullYear(),month.getMonth(),1).getDay();i++)html+='<div class="calendar-cell blank"></div>';const today=new Date().toLocaleDateString('en-CA');for(let day=1;day<=new Date(month.getFullYear(),month.getMonth()+1,0).getDate();day++){const date=`${month.getFullYear()}-${String(month.getMonth()+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;html+=`<button class="calendar-cell ${date===today?'today':''}" data-ui="calendar-day" data-date="${date}">${day}${events.filter(e=>e.date===date).map(e=>`<span class="calendar-event event-${e.color}">${e.title}</span>`).join('')}</button>`;}get('newCalendar').innerHTML=html;const visible=events.filter(e=>e.date.slice(0,7)===`${month.getFullYear()}-${String(month.getMonth()+1).padStart(2,'0')}`).sort((a,b)=>a.date.localeCompare(b.date));get('upcomingEvents').innerHTML=visible.length?visible.map(e=>`<button class="upcoming-item" data-ui="calendar-day" data-date="${e.date}"><span class="event-bullet event-${e.color}">●</span><span>${e.title}<small>${esc(e.round)}<br>${new Date(e.date+'T00:00:00').toLocaleDateString('th-TH',{day:'numeric',month:'long',year:'numeric'})}</small></span></button>`).join(''):'<p class="muted">ไม่มีกำหนดการในเดือนนี้</p>';}
- function showEvent(date){const list=calendarEvents().filter(e=>e.date===date);get('eventDetail').innerHTML=list.length?list.map(e=>`<h3>${e.title}</h3><p>${esc(e.round)}</p><p>${new Date(date+'T00:00:00').toLocaleDateString('th-TH',{day:'numeric',month:'long',year:'numeric'})}</p>`).join(''):'ไม่มีกำหนดการในวันที่เลือก';}
+ function calendarPage(){return heading('ปฏิทินกำหนดการรับสมัคร','ติดตามกำหนดการ TCAS')+panel(`<form id="calendarFilter" class="filter-panel"><label>
+    ปีการศึกษา
+    <select name="year">
+        <option value="">ทุกปีการศึกษา</option>
+        ${[...new Set(
+            (state.calendarApiEvents || [])
+                .map(event => event.academicYear)
+                .filter(year => year != null)
+        )].sort((a, b) => b - a).map(year => `
+            <option value="${esc(year)}">${esc(year)}</option>
+        `).join('')}
+    </select>
+</label>
+<label>
+    รอบการสมัคร
+    <select name="round">
+        <option value="">ทุกรอบ</option>
+        ${[...new Set(
+            (state.calendarApiEvents || [])
+                .map(event => event.round)
+                .filter(round => round && round.trim())
+        )].sort().map(round => `
+            <option value="${esc(round)}">${esc(round)}</option>
+        `).join('')}
+    </select>
+</label>${field('ค้นหาชื่อโครงการ','query')}<button type="reset" class="btn btn-outline">ล้างตัวกรอง</button><button class="btn btn-primary">ค้นหา</button></form>`)+`<div class="calendar-layout">${panel(`<div class="calendar-toolbar"><h2 id="newMonth"></h2><div>${btn('‹','month-prev')}${btn('วันนี้','month-today')}${btn('›','month-next')}</div></div><div class="calendar-grid" id="newCalendar"></div><div class="calendar-legend">● เปิดรับสมัคร　 ● ปิดรับสมัคร　 ● ประกาศผล　 ● ยืนยันสิทธิ์</div><p class="calendar-foot">เลือกกำหนดการในปฏิทินหรือรายการด้านขวาเพื่อดูรายละเอียด</p>`)}${panel('<h2>กำหนดการ</h2><div id="upcomingEvents"></div><h2 class="event-divider">รายละเอียดกำหนดการ</h2><div id="eventDetail" class="event-empty">เลือกกำหนดการเพื่อดูรายละเอียด</div>')}</div>`;}
+function calendarEvents() {
+    const filters = state.calendarFilters || {};
+    const query = (filters.query || '').trim().toLowerCase();
 
+    const eventLabels = {
+        APPLICATION_OPEN: 'เปิดรับสมัคร',
+        APPLICATION_CLOSE: 'ปิดรับสมัคร',
+        RESULT_ANNOUNCEMENT: 'ประกาศผล',
+        RIGHTS_CONFIRMATION: 'ยืนยันสิทธิ์'
+    };
+
+    const eventColors = {
+        APPLICATION_OPEN: 0,
+        APPLICATION_CLOSE: 1,
+        RESULT_ANNOUNCEMENT: 2,
+        RIGHTS_CONFIRMATION: 3
+    };
+
+    return (state.calendarApiEvents || [])
+        .filter(event =>
+            (!filters.year ||
+                Number(filters.year) === event.academicYear) &&
+            (!filters.round ||
+                filters.round === 'ทุกรอบ' ||
+                filters.round === event.round) &&
+            (!query ||
+                String(event.eventTitle || '').toLowerCase().includes(query) ||
+                String(event.round || '').toLowerCase().includes(query))
+        )
+        .map(event => ({
+            id: event.eventId,
+            date: event.eventStartDate || event.eventDate,
+            endDate: event.eventEndDate ||
+                event.eventStartDate || event.eventDate,
+            title: event.sourcePostId != null
+                ? event.eventTitle
+                : eventLabels[event.eventType] || event.eventTitle,
+            round: event.round || '',
+            color: eventColors[event.eventType] ?? 0,
+            academicYear: event.academicYear,
+            sourcePostId: event.sourcePostId
+        }))
+        .filter(event => event.date && event.endDate);
+}
+function calendar() {
+    if (!get('newCalendar')) return;
+
+    const events = calendarEvents();
+    const year = month.getFullYear();
+    const monthIndex = month.getMonth();
+
+    const dateKey = date =>
+        `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+
+    const formatDate = value =>
+        new Date(value + 'T00:00:00').toLocaleDateString('th-TH', {
+            day: 'numeric',
+            month: 'long',
+            year: 'numeric'
+        });
+
+    const firstDate = dateKey(new Date(year, monthIndex, 1));
+    const lastDate = dateKey(new Date(year, monthIndex + 1, 0));
+    const today = dateKey(new Date());
+
+    get('newMonth').textContent = month.toLocaleDateString('th-TH', {
+        month: 'long',
+        year: 'numeric'
+    });
+
+    let html = ['อา.', 'จ.', 'อ.', 'พ.', 'พฤ.', 'ศ.', 'ส.']
+        .map(day => `<div class="calendar-cell day-name">${day}</div>`)
+        .join('');
+
+    const firstWeekday = new Date(year, monthIndex, 1).getDay();
+
+    for (let index = 0; index < firstWeekday; index++) {
+        html += '<div class="calendar-cell blank"></div>';
+    }
+
+    const days = new Date(year, monthIndex + 1, 0).getDate();
+
+    for (let day = 1; day <= days; day++) {
+        const date = dateKey(new Date(year, monthIndex, day));
+        const dailyEvents = events.filter(event =>
+            event.date <= date && event.endDate >= date
+        );
+
+        html += `
+            <button
+                class="calendar-cell ${date === today ? 'today' : ''}"
+                data-ui="calendar-day"
+                data-date="${date}"
+            >
+                ${day}
+                ${dailyEvents.map(event => `
+                    <span class="calendar-event event-${event.color}">
+                        ${esc(event.title)}
+                    </span>
+                `).join('')}
+            </button>
+        `;
+    }
+
+    get('newCalendar').innerHTML = html;
+
+    const visible = events
+        .filter(event =>
+            event.date <= lastDate && event.endDate >= firstDate
+        )
+        .sort((a, b) => a.date.localeCompare(b.date));
+
+    get('upcomingEvents').innerHTML = visible.length
+        ? visible.map(event => `
+            <button
+                class="upcoming-item"
+                data-ui="calendar-day"
+                data-date="${event.date < firstDate ? firstDate : event.date}"
+            >
+                <span class="event-bullet event-${event.color}">●</span>
+                <span>
+                    ${esc(event.title)}
+                    <small>
+                        ${esc(event.round)}
+                        <br>
+                        ${formatDate(event.date)}
+                        ${event.endDate !== event.date
+                            ? ' – ' + formatDate(event.endDate)
+                            : ''}
+                    </small>
+                </span>
+            </button>
+        `).join('')
+        : '<p class="muted">ไม่มีกำหนดการในเดือนนี้</p>';
+
+    get('eventDetail').textContent = 'เลือกกำหนดการเพื่อดูรายละเอียด';
+}
+
+function showEvent(date) {
+    const list = calendarEvents().filter(event =>
+        event.date <= date && event.endDate >= date
+    );
+
+    const formatDate = value =>
+        new Date(value + 'T00:00:00').toLocaleDateString('th-TH', {
+            day: 'numeric',
+            month: 'long',
+            year: 'numeric'
+        });
+
+    get('eventDetail').innerHTML = list.length
+        ? list.map(event => `
+            <h3>${esc(event.title)}</h3>
+            <p>${esc(event.round)}</p>
+            <p>
+                ${formatDate(event.date)}
+                ${event.endDate !== event.date
+                    ? ' – ' + formatDate(event.endDate)
+                    : ''}
+            </p>
+        `).join('')
+        : 'ไม่มีกำหนดการในวันที่เลือก';
+}
   // Figma-aligned applicant search: overview, two charts, filters and paginated list.
- function applicantsPage(){state.chartCohort=scope(selections);state.chartInterests=scope(interests);const list=scope(selections),n=c=>list.filter(s=>c.includes(s.status.statusCode)).length;return heading('ค้นหาข้อมูลผู้สมัคร')+`${lookupTabs('applicants')}<div class="school-notice">ข้อมูลที่แสดงเฉพาะ ${esc(ownSchool().name)} ปีการศึกษา 2569</div><div class="section-caption">ข้อมูลภาพรวมโรงเรียน <small>ข้อมูลภาพรวมไม่เปลี่ยนตามตัวกรองรายชื่อผู้สมัคร</small></div>`+kpis(['ผู้สมัคร','มีสิทธิ์สอบ','ได้รับการคัดเลือก¹','ไม่ยืนยันทะเบียน','สละสิทธิ์','ชำระค่าลงทะเบียน'],[list.length,n(['20','21','22','23','24','25','26','27','28']),n(['40','41','42','43','50']),n(['41']),n(['42']),n(['50'])])+`<div class="search-charts">${chart('สัดส่วนรอบสมัคร TCAS',entryGroups.map(g=>g.entrygroupName),entryGroups.map(g=>list.filter(s=>s.entryGroup.entrygroupId===g.entrygroupId).length),'pie','round')}${groupedChart('หลักสูตรที่สนใจ 5 อันดับแรก',programs.map(p=>p.programName),['จำนวนความสนใจ'],programs.map(p=>[scope(interests).filter(i=>i.program.programId===p.programId).length]),'program')}</div><form id="applicantFilter" class="filter-panel flat-filter">${select('รอบการสมัคร TCAS','round',['ทุกรอบ',...entryGroups.map(g=>g.entrygroupName)])}${select('ปีการศึกษา','year',['2569','2568'])}${select('สถานะการสมัคร','status',['ทั้งหมด',...statuses.map(s=>s.description)])}${field('ชื่อ-สกุล / รหัสผู้สมัคร','query')}<button class="btn btn-outline" type="reset">ล้างตัวกรอง</button><button class="btn btn-primary">ค้นหา</button></form>${panel(`<div class="section-caption"><strong>รายชื่อผู้สมัคร</strong>${btn('ส่งออกรายชื่อ (CSV)','export-applicants')}</div><div id="selectionRows">${pagedSelections()}</div>`)}`;}
+function applicantsPage() {
+    const labels = [
+        'ผู้สมัคร',
+        'มีสิทธิ์สอบ',
+        'ได้รับการคัดเลือก',
+        'ไม่ยืนยันทะเบียน',
+        'สละสิทธิ์',
+        'ชำระค่าลงทะเบียน'
+    ];
+
+    const statistics = `
+        <div class="kpi-grid">
+            ${labels.map(label => `
+                <div class="panel kpi">
+                    <span>${esc(label)}</span>
+                    <strong>—</strong>
+                    <small>ยังไม่พร้อมแสดงสถิติ</small>
+                </div>
+            `).join('')}
+        </div>
+    `;
+
+    const chartPlaceholder = title => panel(`
+        <h3>${esc(title)}</h3>
+        <div class="empty-state">
+            <strong>ยังไม่พร้อมแสดงข้อมูล</strong>
+            <p>จะแสดงเมื่อเชื่อมต่อข้อมูลสถิติแล้ว</p>
+        </div>
+    `);
+
+    return heading('ค้นหาข้อมูลผู้สมัคร') + `
+        ${lookupTabs('applicants')}
+
+        <div class="school-notice">
+            ข้อมูลที่แสดงเฉพาะ ${esc(ownSchool().name)}
+        </div>
+
+        <div class="section-caption">
+            ข้อมูลภาพรวมโรงเรียน
+            <small>สถิติภาพรวมยังไม่พร้อมแสดง</small>
+        </div>
+
+        ${statistics}
+
+        <div class="search-charts">
+            ${chartPlaceholder('สัดส่วนรอบสมัคร TCAS')}
+            ${chartPlaceholder('หลักสูตรที่สนใจ 5 อันดับแรก')}
+        </div>
+
+        <form id="applicantFilter" class="filter-panel flat-filter">
+            <label>
+                รอบการสมัคร TCAS
+                <select name="round" disabled
+                    title="ยังไม่เปิดใช้งานตัวกรองนี้">
+                    <option value="">ทุกรอบ</option>
+                </select>
+            </label>
+
+            <label>
+                ปีการศึกษา
+                <select name="year" disabled
+                    title="ยังไม่เปิดใช้งานตัวกรองนี้">
+                    <option value="">ทุกปีการศึกษา</option>
+                </select>
+            </label>
+
+            <label>
+                สถานะการสมัคร
+                <select name="status" disabled
+                    title="ยังไม่เปิดใช้งานตัวกรองนี้">
+                    <option value="">ทุกสถานะ</option>
+                </select>
+            </label>
+
+            ${field(
+                'ชื่อ-สกุล / เลขประจำตัวประชาชน',
+                'query',
+                state.applicantSearchKeyword || ''
+            )}
+
+            <button class="btn btn-outline" type="reset">
+                ล้างตัวกรอง
+            </button>
+            <button class="btn btn-primary" type="submit">
+                ค้นหา
+            </button>
+        </form>
+
+        ${panel(`
+            <div class="section-caption">
+                <strong>รายชื่อผู้สมัคร</strong>
+                <button
+                    class="btn btn-outline"
+                    type="button"
+                    disabled
+                    title="ยังไม่เปิดใช้งานการส่งออก"
+                >
+                    ส่งออกรายชื่อ (CSV)
+                </button>
+            </div>
+            <div id="selectionRows">${pagedSelections()}</div>
+        `)}
+    `;
+}
  function filteredSelections(){const d=state.applicantFilters||{};return scope(selections).filter(s=>(!d.year||s.applicant.academicYear===+d.year)&&(!d.query||(s.applicant.firstName+' '+s.applicant.lastName+' '+s.applicant.applicantId).includes(d.query.trim()))&&(!d.status||d.status==='ทั้งหมด'||d.status===s.status.description)&&(!d.round||d.round==='ทุกรอบ'||d.round===s.entryGroup.entrygroupName));}
- function pagedSelections(){const list=filteredSelections(),pages=Math.max(1,Math.ceil(list.length/5));state.listPage=Math.min(state.listPage||1,pages);return selectionTable(list.slice((state.listPage-1)*5,state.listPage*5))+`<div class="pagination"><span>แสดง ${list.length?(state.listPage-1)*5+1:0}–${Math.min(state.listPage*5,list.length)} จาก ${list.length} รายการ</span><div>${Array.from({length:pages},(_,i)=>btn(String(i+1),'list-page',i+1===state.listPage?'btn-primary':'btn-outline',`data-number="${i+1}"`)).join('')}</div></div>`;}
- function groupedChart(title,groups,series,values,key='faculty'){const max=Math.max(1,...values.flat());const colors=['#7A2222','#C9A227','#8E8E8E'];return panel(`<h3>${title}</h3><div class="group-legend">${series.map((l,i)=>`<span><i class="dot" style="background:${colors[i]}"></i>${esc(l)}</span>`).join('')}</div><div class="vertical-chart">${groups.map((g,i)=>`<button type="button" class="vertical-group" data-ui="chart-detail" data-key="${key}" data-value="${esc(g)}"><div class="vertical-bars">${values[i].map((v,j)=>`<div style="height:${v/max*175}px;background:${colors[j]}"><span>${v}</span></div>`).join('')}</div><span class="axis-label">${esc(g)}${!values[i].length?'<small>ไม่มีข้อมูล</small>':''}</span></button>`).join('')}</div>`);}
+function pagedSelections() {
+    const result = state.applicantSearchResult;
+
+    if (!result || !Array.isArray(result.content)) {
+        return `
+            <div class="empty-state" role="status">
+                <strong>ยังไม่ได้โหลดข้อมูลผู้สมัคร</strong>
+            </div>
+        `;
+    }
+
+    const rows = result.content.map(applicant => [
+        esc(applicant.applicantId),
+        esc(applicant.studentName),
+        esc(applicant.schoolName),
+        tag(applicant.statusDescription || applicant.status || '—')
+    ]);
+
+    const first = result.content.length
+        ? result.currentPage * result.pageSize + 1
+        : 0;
+
+    const last = result.content.length
+        ? first + result.content.length - 1
+        : 0;
+
+    const hasPrevious = result.currentPage > 0;
+    const hasNext = result.currentPage + 1 < result.totalPages;
+
+    return table(
+        ['รหัสผู้สมัคร', 'ชื่อ-นามสกุล', 'โรงเรียน', 'สถานะล่าสุด'],
+        rows
+    ) + `
+        <div class="pagination">
+            <span>
+                แสดง ${first}–${last} จาก ${result.totalItems} รายการ
+            </span>
+            <div>
+                <button
+                    type="button"
+                    class="btn btn-outline"
+                    data-ui="list-page"
+                    data-number="${result.currentPage - 1}"
+                    ${hasPrevious ? '' : 'disabled'}
+                >
+                    ก่อนหน้า
+                </button>
+                <span>
+                    หน้า ${result.totalPages ? result.currentPage + 1 : 0}
+                    / ${result.totalPages}
+                </span>
+                <button
+                    type="button"
+                    class="btn btn-outline"
+                    data-ui="list-page"
+                    data-number="${result.currentPage + 1}"
+                    ${hasNext ? '' : 'disabled'}
+                >
+                    ถัดไป
+                </button>
+            </div>
+        </div>
+    `;
+} function groupedChart(title,groups,series,values,key='faculty'){const max=Math.max(1,...values.flat());const colors=['#7A2222','#C9A227','#8E8E8E'];return panel(`<h3>${title}</h3><div class="group-legend">${series.map((l,i)=>`<span><i class="dot" style="background:${colors[i]}"></i>${esc(l)}</span>`).join('')}</div><div class="vertical-chart">${groups.map((g,i)=>`<button type="button" class="vertical-group" data-ui="chart-detail" data-key="${key}" data-value="${esc(g)}"><div class="vertical-bars">${values[i].map((v,j)=>`<div style="height:${v/max*175}px;background:${colors[j]}"><span>${v}</span></div>`).join('')}</div><span class="axis-label">${esc(g)}${!values[i].length?'<small>ไม่มีข้อมูล</small>':''}</span></button>`).join('')}</div>`);}
  function managementAnalytics(filters={}){const list=cohort(filters),selected=s=>['40','41','42','43','50'].includes(s.status.statusCode),paid=list.filter(s=>s.status.statusCode==='50'),chosen=list.filter(selected),ids=new Set(list.map(s=>s.applicant.applicantId));const ints=scope(interests).filter(i=>ids.has(i.applicant.applicantId));state.chartCohort=list;state.chartInterests=ints;const faculties=[...new Set(programs.map(p=>p.faculty))];const facultyIds=f=>new Set(ints.filter(i=>i.program.faculty===f).map(i=>i.applicant.applicantId));const weekly=Array.from({length:4},(_,i)=>list.filter(s=>Math.min(3,Math.floor((new Date(s.appliedAt).getDate()-1)/7))===i).length);const n=c=>list.filter(s=>c.includes(s.status.statusCode)).length;
  return kpis(['ผู้สมัครทั้งหมด','มีสิทธิ์สอบ/สัมภาษณ์','ได้รับการคัดเลือก¹','ชำระค่าลงทะเบียนแล้ว','สละสิทธิ์','ไม่ยืนยันทะเบียน'],[ids.size,n(['20','21','22','23','24','25','26','27','28']),chosen.length,paid.length,n(['42']),n(['41'])])+`<div class="chart-grid report-four">${chart('ขั้นตอนการสมัคร (สถานะปัจจุบัน)',['สมัครเข้าศึกษา','มีสิทธิ์สอบ/สัมภาษณ์','ได้รับการคัดเลือก','ชำระค่าลงทะเบียนแล้ว'],[list.length,n(['20','21','22','23','24','25','26','27','28']),chosen.length,paid.length],'bar','stage')}${chart('ผลหลังการคัดเลือก',['ชำระแล้ว','สละสิทธิ์','ได้รับคัดเลือก ยังไม่ชำระ'],[paid.length,n(['42']),chosen.length-paid.length-n(['42'])],'pie','outcome')}${groupedChart('ผู้สนใจและผู้ได้รับการคัดเลือกตามสำนักวิชา',faculties,['ผู้สนใจ','ได้รับการคัดเลือก'],faculties.map(f=>{const set=facultyIds(f);return [set.size,list.filter(s=>set.has(s.applicant.applicantId)&&selected(s)).length]}))}${chart('สัดส่วนตามรอบรับสมัคร',entryGroups.map(g=>g.entrygroupName),entryGroups.map(g=>list.filter(s=>s.entryGroup.entrygroupId===g.entrygroupId).length),'pie','round')}${chart('จำนวนการสมัครรายสัปดาห์',['สัปดาห์ที่ 1','สัปดาห์ที่ 2','สัปดาห์ที่ 3','สัปดาห์ที่ 4'],weekly,'bar','week')}${groupedChart('เปรียบเทียบรายปีการศึกษา',['2567','2568','2569'],['ผู้สมัคร','ได้รับการคัดเลือก','ชำระแล้ว'],[[],[],[list.length,chosen.length,paid.length]],'year')}</div>${chart('รายละเอียดสถานะผู้สมัครตามรหัส',statuses.map(s=>s.statusCode+' · '+s.description),statuses.map(t=>n([t.statusCode])),'bar','status')}<div class="report-summary"><strong>สรุปข้อมูลประกอบการตัดสินใจ</strong><p>จำนวนผู้สมัคร ${ids.size} คน ผู้ได้รับการคัดเลือก¹ ${chosen.length} คน ผู้ชำระค่าลงทะเบียนแล้ว ${paid.length} คน</p><p>อัตราชำระค่าลงทะเบียนจากผู้ได้รับการคัดเลือก ${chosen.length?(paid.length/chosen.length*100).toFixed(1):'0.0'}% · อัตราสละสิทธิ์ ${chosen.length?(n(['42'])/chosen.length*100).toFixed(1):'0.0'}%</p><small>¹ รวมสถานะ 40–43 และ 50 เพื่อแสดงประวัติได้รับคัดเลือกจากสถานะปัจจุบัน ไม่ใช่สถิติขั้นตอนย้อนหลัง ส่วนสถานะก่อนหน้าต้องใช้ประวัติจาก API<br>ไม่มีข้อมูลปี 2567–2568 ในชุดปัจจุบัน จึงไม่แสดงแท่งและไม่คำนวณอัตราเติบโต การจัดกลุ่มสำนักวิชาอ้างอิงความสนใจ หนึ่งคนอาจอยู่หลายสำนักวิชา</small></div><p class="report-source">ขอบเขต ${esc(state.role==='teacher'?ownSchool().name:filters.school||'ทุกโรงเรียน')} · ปี ${esc(filters.year||'2569')} · ${esc(filters.round||'ทุกรอบ')} · ข้อมูลสาธิตสำหรับตรวจหน้าจอ</p>`;
  }
@@ -297,7 +1190,50 @@ case 'authForm':
  function adminApplicantTable(){const list=state.adminApplicantList||[];const page=state.adminApplicantPage||1;return selectionTable(list.slice((page-1)*5,page*5))+`<div class="pagination"><span>แสดง ${list.length?(page-1)*5+1:0}–${Math.min(page*5,list.length)} จาก ${list.length} รายการ</span><div>${Array.from({length:Math.max(1,Math.ceil(list.length/5))},(_,i)=>btn(String(i+1),'admin-applicant-page',page===i+1?'btn-primary':'btn-outline',`data-number="${i+1}"`)).join('')}</div></div>`;}
  function adminAnalysisData(rank,ints,faculties){return `<div class="panel admin-ranking"><div class="admin-panel-heading"><h3>อันดับความสนใจหลักสูตร</h3><small>จัดอันดับตามจำนวนรายการความสนใจ</small></div>${rank.map((g,n)=>`<button class="rank-row" data-ui="program-applicants" data-id="${g.p.programId}"><span class="rank-number">${n+1}</span><span><strong>${esc(g.p.programName)}</strong><i style="width:${g.rows.length/Math.max(1,...rank.map(x=>x.rows.length))*100}%"></i></span><b>${g.rows.length}</b></button>`).join('')}</div><div class="admin-analysis-aside">${groupedChart('จำนวนความสนใจรวมตามสำนักวิชา',faculties,['จำนวนความสนใจ'],faculties.map(f=>[ints.filter(i=>i.program.faculty===f).length]),'faculty')}${chart('สัดส่วนรอบการรับสมัคร',entryGroups.map(g=>g.entrygroupName),entryGroups.map(g=>adminScope().filter(s=>s.entryGroup.entrygroupId===g.entrygroupId).length),'pie','round')}</div>`;}
  function adminSystemReport(){const ints=adminInterests(),rank=adminRanking(ints),source=adminScope();state.chartInterests=ints;state.chartCohort=source;return `<div class="panel admin-table-panel"><div class="admin-panel-heading"><h3>อันดับความสนใจหลักสูตร</h3></div>${table(['อันดับ','หลักสูตร','สำนักวิชา','จำนวนผู้สนใจ','สัดส่วน'],rank.map((g,n)=>[n+1,btn(esc(g.p.programName),'program-applicants','table-title',`data-id="${g.p.programId}"`),esc(g.p.faculty),g.rows.length,ints.length?(g.rows.length/ints.length*100).toFixed(1)+'%':'0.0%']))}</div><div class="admin-report-bottom">${chart('จำนวนผู้สมัครตามโรงเรียน',schools.map(s=>s.name),schools.map(s=>source.filter(x=>x.applicant.school.schoolId===s.schoolId).length),'bar','school')}${chart('สัดส่วนรอบการรับสมัคร',entryGroups.map(g=>g.entrygroupName),entryGroups.map(g=>source.filter(s=>s.entryGroup.entrygroupId===g.entrygroupId).length),'pie','round')}</div>`;}
- function adminPostForm(p={}){return `<div class="admin-editor-layout"><article class="panel admin-editor-main"><div class="admin-panel-heading"><h3>${p.postId?'แก้ไขข่าวสารและประชาสัมพันธ์':'สร้างและเผยแพร่ประชาสัมพันธ์'}</h3>${adminBadge(p.uiDraft?'ฉบับร่าง':p.postId?'แก้ไขเนื้อหา':'ฉบับร่าง')}</div><form id="postForm" class="form-grid"><input type="hidden" name="postId" value="${p.postId||''}"><input type="hidden" name="summary" value="${esc(p.summary||'')}"><input type="hidden" name="uiDraft" value="false">${select('ประเภทเนื้อหา','postType',[p.postType||'ข่าว PR','ข่าวสารและประชาสัมพันธ์','กิจกรรม','ประกาศ'])}${select('สถานะการแสดงผล','isHidden',[p.isHidden?'ซ่อน':'แสดงบนเว็บไซต์',p.isHidden?'แสดงบนเว็บไซต์':'ซ่อน'])}<div class="full">${field('ชื่อเรื่อง','title',p.title,'text',true,'maxlength="255" placeholder="กรอกชื่อเรื่อง"')}</div><label class="full">เนื้อหา<textarea name="content" rows="5" required placeholder="รายละเอียดข่าวหรือประชาสัมพันธ์">${esc(p.content||'')}</textarea></label><h4 class="full">สถานที่จัดกิจกรรม</h4><div class="full">${field('ชื่ออาคาร / สถานที่','venue',p.venue,'text',false,'placeholder="กรอกชื่ออาคารหรือสถานที่"')}</div><div class="full admin-location-grid">${field('ตำบล / แขวง','subdistrict',p.subdistrict)}${field('อำเภอ / เขต','district',p.district)}${field('จังหวัด','province',p.province)}${field('รหัสไปรษณีย์','zipcode',p.zipcode)}</div>${field('วันเริ่มจัดกิจกรรม','eventStartDate',p.eventStartDate,'date')}${field('วันสิ้นสุดกิจกรรม','eventEndDate',p.eventEndDate,'date')}${field('วันเริ่มแสดงผล','visibleStartDate',p.visibleStartDate,'date',true)}${field('วันสิ้นสุดการแสดงผล','visibleEndDate',p.visibleEndDate,'date',true)}<div class="form-actions full admin-editor-actions">${btn('บันทึกฉบับร่าง','admin-save-draft')}${btn('ดูตัวอย่าง','preview-post')}<button class="btn btn-primary" data-publish="true">${p.postId?'บันทึกการแก้ไข':'เผยแพร่ทันที'}</button></div></form></article><aside class="panel admin-preview-panel"><div class="admin-panel-heading"><h3>ตัวอย่างการแสดงผล</h3></div><div id="postPreview"><span class="tag tag-orange">${esc(p.postType||'ข่าว PR')}</span><h2>${esc(p.title||'ชื่อเรื่องประชาสัมพันธ์')}</h2><p>${esc(p.summary||p.content||'รายละเอียดข่าวหรือประชาสัมพันธ์')}</p></div><div class="admin-checklist"><h3>รายการตรวจสอบก่อนเผยแพร่</h3><ul><li>กรอกชื่อเรื่องและเนื้อหาครบแล้ว</li><li>กำหนดช่วงเวลาแล้ว</li><li>กำหนดสถานะการแสดงผลแล้ว</li><li>ตรวจสอบตัวอย่างแล้ว</li></ul></div></aside></div>`;}
+ function adminPostForm(p={}){return `<div class="admin-editor-layout"><article class="panel admin-editor-main"><div class="admin-panel-heading"><h3>${p.postId?'แก้ไขข่าวสารและประชาสัมพันธ์':'สร้างและเผยแพร่ประชาสัมพันธ์'}</h3>${adminBadge(p.uiDraft?'ฉบับร่าง':p.postId?'แก้ไขเนื้อหา':'ฉบับร่าง')}</div><form id="postForm" class="form-grid"><input type="hidden" name="postId" value="${p.postId||''}"><label class="full">
+    สรุปข่าว
+    <textarea
+        name="summary"
+        rows="3"
+        required
+        placeholder="กรอกสรุปข่าวสำหรับแสดงบนการ์ด"
+    >${esc(p.summary || '')}</textarea>
+</label><input type="hidden" name="uiDraft" value="false"><label>
+    ประเภทเนื้อหา
+    <select name="postType" required>
+        <option value="PR" ${(!p.postType || p.postType.toUpperCase() === 'PR') ? 'selected' : ''}>ประชาสัมพันธ์</option>
+        <option value="NEWS" ${p.postType?.toUpperCase() === 'NEWS' ? 'selected' : ''}>ข่าวสาร</option>
+        <option value="ANNOUNCEMENT" ${p.postType?.toUpperCase() === 'ANNOUNCEMENT' ? 'selected' : ''}>ประกาศ</option>
+    </select>
+</label>${select('สถานะการแสดงผล','isHidden',[p.isHidden?'ซ่อน':'แสดงบนเว็บไซต์',p.isHidden?'แสดงบนเว็บไซต์':'ซ่อน'])}<div class="full">${field('ชื่อเรื่อง','title',p.title,'text',true,'maxlength="255" placeholder="กรอกชื่อเรื่อง"')}</div><label class="full">เนื้อหา<textarea name="content" rows="5" required placeholder="รายละเอียดข่าวหรือประชาสัมพันธ์">${esc(p.content||'')}</textarea></label><div class="full">
+    ${field(
+        'กลุ่มเป้าหมาย',
+        'targetAudience',
+        p.targetAudience ?? 'ครูแนะแนว',
+        'text',
+        true
+    )}
+</div>
+<div class="full">
+    ${field(
+        'กลุ่มเป้าหมาย',
+        'targetAudience',
+        p.targetAudience ?? 'ครูแนะแนว',
+        'text',
+        true
+    )}
+</div>
+<div class="full">
+    ${field(
+        'ประเภทกิจกรรมสำหรับปฏิทิน',
+        'eventType',
+        p.eventType ?? '',
+        'text',
+        false,
+        'placeholder="เว้นว่างหากไม่ต้องการแสดงในปฏิทิน"'
+    )}
+</div>
+<h4 class="full">สถานที่จัดกิจกรรม</h4><div class="full">${field('ชื่ออาคาร / สถานที่','venue',p.venue,'text',false,'placeholder="กรอกชื่ออาคารหรือสถานที่"')}</div><div class="full admin-location-grid">${field('ตำบล / แขวง','subdistrict',p.subdistrict)}${field('อำเภอ / เขต','district',p.district)}${field('จังหวัด','province',p.province)}${field('รหัสไปรษณีย์','zipcode',p.zipcode)}</div>${field('วันเริ่มจัดกิจกรรม','eventStartDate',p.eventStartDate,'date')}${field('วันสิ้นสุดกิจกรรม','eventEndDate',p.eventEndDate,'date')}${field('วันเริ่มแสดงผล','visibleStartDate',p.visibleStartDate,'date',true)}${field('วันสิ้นสุดการแสดงผล','visibleEndDate',p.visibleEndDate,'date',true)}<div class="form-actions full admin-editor-actions">${btn('บันทึกฉบับร่าง','admin-save-draft')}${btn('ดูตัวอย่าง','preview-post')}<button class="btn btn-primary" data-publish="true">${p.postId?'บันทึกการแก้ไข':'เผยแพร่ทันที'}</button></div></form></article><aside class="panel admin-preview-panel"><div class="admin-panel-heading"><h3>ตัวอย่างการแสดงผล</h3></div><div id="postPreview"><span class="tag tag-orange">${esc(p.postType||'ข่าว PR')}</span><h2>${esc(p.title||'ชื่อเรื่องประชาสัมพันธ์')}</h2><p>${esc(p.summary||p.content||'รายละเอียดข่าวหรือประชาสัมพันธ์')}</p></div><div class="admin-checklist"><h3>รายการตรวจสอบก่อนเผยแพร่</h3><ul><li>กรอกชื่อเรื่องและเนื้อหาครบแล้ว</li><li>กำหนดช่วงเวลาแล้ว</li><li>กำหนดสถานะการแสดงผลแล้ว</li><li>ตรวจสอบตัวอย่างแล้ว</li></ul></div></aside></div>`;}
  function adminPostDetail(id){document.querySelectorAll('.nav-link').forEach(b=>b.classList.toggle('active',b.dataset.target==='posts'));const p=state.posts.find(p=>p.postId===+id);if(!p)return;state.page='project-detail';state.selectedPost=p.postId;get('extendedPage').dataset.view='admin-post-detail';get('extendedPage').innerHTML=`<div class="admin-breadcrumb">${btn('ข่าวสารและประชาสัมพันธ์','nav','text-button','data-target="posts"')} / รายละเอียดข่าว</div><div class="page-heading"><h1>รายละเอียดข่าว: ${esc(p.title)}</h1>${adminBadge(adminPostStatus(p))}</div><div class="admin-detail-layout">${panel(`<h3>ข้อมูลข่าวประชาสัมพันธ์</h3><dl class="review-grid one-column"><div><dt>ชื่อเรื่อง</dt><dd>${esc(p.title)}</dd></div><div><dt>ประเภท</dt><dd>${esc(p.postType)}</dd></div><div><dt>วันที่เผยแพร่</dt><dd>${esc(p.publishedAt?.slice(0,10)||'—')}</dd></div><div><dt>ช่วงแสดงผล</dt><dd>${esc(p.visibleStartDate)} – ${esc(p.visibleEndDate)}</dd></div></dl><div class="detail-copy preserved">${esc(p.content)}</div>${p.venue?`<p>สถานที่: ${esc(p.venue)}</p>`:''}`)}${panel(`<h3>ตรวจสอบก่อนเผยแพร่</h3><ul class="admin-checklist"><li>ชื่อเรื่องและเนื้อหาครบถ้วน</li><li>กำหนดช่วงแสดงผลแล้ว</li><li>ตรวจสอบตัวอย่างแล้ว</li></ul><div class="form-actions">${btn('แก้ไขข่าว','post-edit','btn-outline',`data-id="${p.postId}"`)}${btn(p.isHidden?'แสดงเนื้อหา':'ซ่อนเนื้อหา','admin-hide-post','btn-primary',`data-id="${p.postId}"`)}</div>`)}</div>`;}
 
  document.addEventListener('input',e=>{if(state.role==='admin'&&e.target.closest('#postForm')){const f=get('postForm');get('postPreview').innerHTML=`<span class="tag tag-orange">${esc(f.elements.postType.value)}</span><h2>${esc(f.elements.title.value||'ชื่อเรื่องประชาสัมพันธ์')}</h2><p>${esc(f.elements.content.value||'รายละเอียดข่าวหรือประชาสัมพันธ์')}</p><small>${esc(f.elements.visibleStartDate.value)} – ${esc(f.elements.visibleEndDate.value)}</small>`;}});
