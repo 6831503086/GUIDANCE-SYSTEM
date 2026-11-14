@@ -1,4 +1,3 @@
-
 package guidance_system.controller;
 
 import guidance_system.entity.GuidanceTeacher;
@@ -29,17 +28,20 @@ public class GuidanceTeacherController {
     private final GuidanceTeacherService service;
     private final ProfilePictureService profilePictureService;
     private final PrefixRepository prefixRepository;
+    private final RegistrationVerificationController registrationVerification;
 
     public GuidanceTeacherController(
             GuidanceTeacherRepository repository,
             GuidanceTeacherService service,
             ProfilePictureService profilePictureService,
-            PrefixRepository prefixRepository) {
+            PrefixRepository prefixRepository,
+            RegistrationVerificationController registrationVerification) {
 
         this.repository = repository;
         this.service = service;
         this.profilePictureService = profilePictureService;
         this.prefixRepository = prefixRepository;
+        this.registrationVerification = registrationVerification;
     }
 
     @GetMapping
@@ -63,8 +65,11 @@ public class GuidanceTeacherController {
             @RequestBody GuidanceTeacher teacher) {
 
         try {
-            return ResponseEntity.ok(
-                    service.registerTeacher(teacher));
+            GuidanceTeacher registered = service.registerTeacher(teacher);
+            return ResponseEntity.ok(Map.of(
+                    "message", "Registration successful. Please verify your email.",
+                    "verificationCheckToken", registrationVerification.issue(registered.getTeacherId())
+            ));
 
         } catch (IllegalArgumentException exception) {
             return ResponseEntity.badRequest()

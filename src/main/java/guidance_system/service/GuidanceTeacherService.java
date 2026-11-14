@@ -1,4 +1,3 @@
-
 package guidance_system.service;
 
 import guidance_system.entity.GuidanceTeacher;
@@ -18,6 +17,9 @@ import guidance_system.entity.School;
 
 @Service
 public class GuidanceTeacherService {
+
+    @jakarta.persistence.PersistenceContext
+    private jakarta.persistence.EntityManager entityManager;
 
     private final GuidanceTeacherRepository repository;
     private final PasswordEncoder passwordEncoder;
@@ -45,55 +47,71 @@ public class GuidanceTeacherService {
         this.postRegistrationRepository = postRegistrationRepository;
     }
 
-    // Register teacher and generate email verification token
-
-    // Register teacher and generate email verification token
+    // Validate and create only registration fields; ignore client-supplied account state.
     @Transactional
-    public GuidanceTeacher registerTeacher(GuidanceTeacher teacher) {
-
-        // Check PDPA consent
-        if (!Boolean.TRUE.equals(teacher.getPdpaConsent())) {
-            throw new IllegalArgumentException(
-                    "PDPA consent is required before registration.");
+    public GuidanceTeacher registerTeacher(GuidanceTeacher request) {
+        if (request == null || !Boolean.TRUE.equals(request.getPdpaConsent())) {
+            throw new IllegalArgumentException("PDPA consent is required before registration.");
         }
-
-        // Check password
-        if (teacher.getPasswordHash() == null
-                || teacher.getPasswordHash().isBlank()) {
-            throw new IllegalArgumentException("Password is required.");
+        String email = request.getEmail() == null ? ""
+                : request.getEmail().trim().toLowerCase(java.util.Locale.ROOT);
+        if (email.length() > 150 || !email.matches("^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$")) {
+            throw new IllegalArgumentException("Please enter a valid email address.");
         }
-
-
-
-        // Check duplicate email
-        if (repository.existsByEmail(teacher.getEmail())) {
-            throw new IllegalArgumentException("Email already exists.");
+        String password = request.getPasswordHash();
+        if (password == null || password.length() < 8
+                || password.getBytes(java.nio.charset.StandardCharsets.UTF_8).length > 72) {
+            throw new IllegalArgumentException("Password must contain at least 8 characters and at most 72 UTF-8 bytes.");
         }
-
-        // Encrypt password
-        teacher.setPasswordHash(
-                passwordEncoder.encode(teacher.getPasswordHash())
-        );
-
+        String firstName = request.getFirstName() == null ? "" : request.getFirstName().trim();
+        String lastName = request.getLastName() == null ? "" : request.getLastName().trim();
+        String position = request.getPositionTitle() == null ? "" : request.getPositionTitle().trim();
+        String phone = request.getPhone() == null ? "" : request.getPhone().trim();
+        if (firstName.isEmpty() || lastName.isEmpty() || position.isEmpty()
+                || firstName.length() > 100 || lastName.length() > 100 || position.length() > 100) {
+            throw new IllegalArgumentException("First name, last name and position are required (maximum 100 characters each).");
+        }
+        if (!phone.matches("^0[0-9]{9}$")) {
+            throw new IllegalArgumentException("Please enter a valid 10-digit phone number starting with 0.");
+        }
+        if (request.getSchool() == null || request.getSchool().getSchoolId() == null
+                || request.getPrefix() == null || request.getPrefix().getPrefixId() == null) {
+            throw new IllegalArgumentException("Please select an existing school and prefix.");
+        }
+        // Serialize concurrent registrations for the same school until transaction completion.
+        School school = entityManager.find(School.class, request.getSchool().getSchoolId(),
+                jakarta.persistence.LockModeType.PESSIMISTIC_WRITE);
+        guidance_system.entity.Prefix prefix = entityManager.find(
+                guidance_system.entity.Prefix.class, request.getPrefix().getPrefixId());
+        if (school == null || prefix == null) {
+            throw new IllegalArgumentException("The selected school or prefix no longer exists.");
+        }
+        if (repository.existsBySchool_SchoolId(school.getSchoolId())) {
+            throw new IllegalArgumentException("This school already has a guidance teacher account. Please contact the administrator.");
+        }
+        if (repository.findAll().stream().anyMatch(existing ->
+                email.equalsIgnoreCase(existing.getEmail())
+                || email.equalsIgnoreCase(existing.getPendingEmail()))) {
+            throw new IllegalArgumentException("Email is already registered or awaiting verification.");
+        }
+        GuidanceTeacher teacher = new GuidanceTeacher();
+        teacher.setSchool(school);
+        teacher.setPrefix(prefix);
+        teacher.setFirstName(firstName);
+        teacher.setLastName(lastName);
+        teacher.setPositionTitle(position);
+        teacher.setPhone(phone);
+        teacher.setEmail(email);
+        teacher.setPasswordHash(passwordEncoder.encode(password));
+        teacher.setPdpaConsent(true);
         teacher.setIsEmailVerified(false);
         teacher.setRegisteredAt(LocalDate.now());
-
+        teacher.setActiveAcademicYear(LocalDate.now().getYear() + 543);
         GuidanceTeacher savedTeacher = repository.save(teacher);
-
-        // Generate verification token
-        VerificationToken token = tokenService.createToken(
-                savedTeacher, "verify_email"
-        );
-
-        // Send verification email
-        emailService.sendVerificationEmail(
-                savedTeacher.getEmail(),
-                token.getToken()
-        );
-
+        VerificationToken token = tokenService.createToken(savedTeacher, "verify_email");
+        emailService.sendVerificationEmail(savedTeacher.getEmail(), token.getToken());
         return savedTeacher;
     }
-
 
     @Transactional
     public boolean verifyTeacherEmail(String token) {
