@@ -555,26 +555,26 @@ const routes = {
     if ((response.headers.get('Content-Type') || '').includes('json')) return JSON.parse(text);
     return text;
   }
+  function requireEmail(value) {
+    const email = typeof value === 'string' ? value.trim() : '';
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      throw new Error('กรุณากรอกอีเมลให้ถูกต้อง');
+    }
+    return email.toLowerCase();
+  }
+  async function requestPasswordReset(email) {
+    return request('LoginController.forgotPassword', {
+      method: 'POST', auth: false, body: {email: requireEmail(email)}
+    });
+  }
   async function login(email, password) {
     const version = ++loginVersion;
     token = null;
-
-    const result = await request('LoginController.login', {
-        auth: false,
-        body: {
-            email: email.trim().toLowerCase(),
-            password
-        }
-    });
-
-    if (version !== loginVersion) {
-        throw new Error('Login request cancelled');
-    }
-
-    if (typeof result?.token !== 'string' || !result.token) {
-        throw new Error('Login response has no token');
-    }
-
+    email = requireEmail(email);
+    // Authenticate using the email field expected by the current backend.
+    const result = await request('LoginController.login', {auth:false, body:{email,password}});
+    if (version !== loginVersion) throw new Error('Login request cancelled');
+    if (typeof result?.token !== 'string' || !result.token) throw new Error('Login response has no token');
     token = result.token;
     return result;
 }
@@ -583,6 +583,33 @@ const routes = {
     const url = URL.createObjectURL(blob), a = document.createElement('a');
     a.href = url; a.download = filename; a.click(); setTimeout(() => URL.revokeObjectURL(url), 1000);
   }
-  return {configure, request, login, download, logout(){loginVersion++;token=null;}, ApiError,
-    operations: Object.freeze(Object.fromEntries(Object.entries(routes).map(([k,v]) => [k,Object.freeze({...v})])))};
+  async function verifyEmail(verificationToken, type) {
+  if (!verificationToken?.trim()) {
+    throw new Error("กรุณาระบุ Token ยืนยันอีเมล");
+  }
+  return request("EmailVerificationController.verify", {
+    method: "GET",
+    auth: false,
+    query: {
+      token: verificationToken.trim(),
+      ...(type ? { type } : {})
+    }
+  });
+}
+return { configure, request,
+  login,
+  requestPasswordReset,
+  verifyEmail,
+  download,
+  logout() { loginVersion++; token = null; },
+  ApiError,
+  operations: Object.freeze(
+    Object.fromEntries(
+      Object.entries(routes).map(([k, v]) => [
+        k,
+        Object.freeze({ ...v })
+      ])
+    )
+  )
+};
 })();
