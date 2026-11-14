@@ -50,7 +50,7 @@ const UI = (() => {
     return 'ค';
  }
  function shell(){document.body.classList.remove('auth-mode');get('authRoot').classList.add('hidden');document.querySelector('.app-shell').classList.remove('hidden');document.querySelector('.side-nav').innerHTML=(state.role==='admin'?adminMenu:teacherMenu).map(([p,i,l])=>`<button class="nav-link ${p===state.page?'active':''}" data-ui="nav" data-target="${p}"><span class="nav-icon">${navIcon(p)}</span>${l}</button>`).join('');document.querySelector('.app-shell').classList.toggle('admin-ui',state.role==='admin');document.querySelector('.sidebar-user').innerHTML=`<button class="account-trigger" type="button" data-ui="account-menu" aria-haspopup="dialog" aria-label="เปิดเมนูบัญชี ${state.role==='admin'?'ผู้ดูแลระบบ':esc(state.profile.firstName+' '+state.profile.lastName)}"><span class="avatar">${accountAvatarMarkup()}</span><span class="account-copy"><strong>${state.role==='admin'?'ผู้ดูแลระบบ':esc(state.profile.firstName+' '+state.profile.lastName)}</strong><span>${state.role==='admin'?'แอดมิน':'ครูแนะแนว'}</span></span><span class="account-chevron" aria-hidden="true">⌃</span></button>`;}
- function render(page=state.page){if(page==='publish')page='results';if(state.role==='admin')state.adminFilters={};if(state.role==='teacher'&&!teacherMenu.some(x=>x[0]===page)&&!['renew','project-detail','own-school-stats'].includes(page))page='dashboard';state.page=page;shell();document.querySelectorAll('.page').forEach(el=>el.classList.add('hidden'));const root=get('extendedPage');root.dataset.view=page;root.classList.remove('hidden');root.innerHTML=content(page);document.querySelector('.topbar strong').innerHTML='MFU'+(state.role==='teacher'?`<small class="header-school">${esc(ownSchool().name)}</small>`:'');if(page==='school-search'&&state.role==='admin'&&!state.adminSchoolLoaded&&!state.adminSchoolLoading)void loadAdminSchools();if(page==='admin-dashboard'&&state.role==='admin'&&!state.adminDashboardLoaded&&!state.adminDashboardLoading)void loadAdminDashboard();if(page==='results'&&state.role==='admin'&&!state.adminResultsLoaded&&!state.adminResultsLoading)void loadAdminResults();if(state.role==='admin'&&['analysis','reports'].includes(page)&&!state.liveAdminReportsLoaded&&!state.liveAdminReportsLoading)void loadLiveAdminReports();if(page==='schools'&&state.role==='teacher'&&!state.teacherSchoolLoaded&&!state.teacherSchoolLoading)void loadTeacherSchool();if(page==='overview'&&state.role==='teacher'&&!state.teacherReportLoaded&&!state.teacherReportLoading)void loadTeacherOverviewReport();if(page==='calendar')calendar();document.querySelectorAll('.nav-link').forEach(b=>b.classList.toggle('active',((b.dataset.target===page&&!(state.role==='admin'&&page==='post-new'&&state.editingPostId))||(state.role==='admin'&&((['admin-applicants'].includes(page)&&b.dataset.target==='results')||(page==='expired'&&b.dataset.target==='posts')||(page==='post-new'&&state.editingPostId&&b.dataset.target==='posts')||(page==='admin-students'&&b.dataset.target==='school-search')))||(page==='renew'&&b.dataset.target==='profile')||(page==='own-school-stats'&&b.dataset.target==='applicants'))));get('sidebar').classList.remove('open');window.scrollTo(0,0);}
+ function render(page=state.page){if(page==='publish')page='results';if(state.role==='admin')state.adminFilters={};if(state.role==='teacher'&&!teacherMenu.some(x=>x[0]===page)&&!['renew','project-detail','own-school-stats'].includes(page))page='dashboard';state.page=page;shell();document.querySelectorAll('.page').forEach(el=>el.classList.add('hidden'));const root=get('extendedPage');root.dataset.view=page;root.classList.remove('hidden');root.innerHTML=content(page);document.querySelector('.topbar strong').innerHTML='MFU'+(state.role==='teacher'?`<small class="header-school">${esc(ownSchool().name)}</small>`:'');if(page==='school-search'&&state.role==='admin'&&!state.adminSchoolLoaded&&!state.adminSchoolLoading)void loadAdminSchools();if(page==='admin-dashboard'&&state.role==='admin'&&!state.adminDashboardLoaded&&!state.adminDashboardLoading)void loadAdminDashboard();if(page==='results'&&state.role==='admin'&&!state.adminResultsLoaded&&!state.adminResultsLoading)void loadAdminResults();if(state.role==='admin'&&['analysis','reports'].includes(page)&&!state.liveAdminReportsLoaded&&!state.liveAdminReportsLoading)void loadLiveAdminReports();if(page==='schools'&&state.role==='teacher'&&!state.teacherSchoolLoaded&&!state.teacherSchoolLoading)void loadTeacherSchool();if(page==='overview'&&state.role==='teacher'&&!state.teacherReportLoaded&&!state.teacherReportLoading)void loadTeacherOverviewReport();if(page==='applicants'&&state.role==='teacher'&&!state.teacherApplicantLoaded&&!state.teacherApplicantLoading)void loadTeacherApplicantSearch();if(page==='calendar')calendar();document.querySelectorAll('.nav-link').forEach(b=>b.classList.toggle('active',((b.dataset.target===page&&!(state.role==='admin'&&page==='post-new'&&state.editingPostId))||(state.role==='admin'&&((['admin-applicants'].includes(page)&&b.dataset.target==='results')||(page==='expired'&&b.dataset.target==='posts')||(page==='post-new'&&state.editingPostId&&b.dataset.target==='posts')||(page==='admin-students'&&b.dataset.target==='school-search')))||(page==='renew'&&b.dataset.target==='profile')||(page==='own-school-stats'&&b.dataset.target==='applicants'))));get('sidebar').classList.remove('open');window.scrollTo(0,0);}
 function postCards(source = state.posts) {
     const posts = source
         .filter(post => !post.isHidden)
@@ -470,7 +470,7 @@ try {
     }
 }
  let authRole='teacher';
- function auth(view='login',role=authRole){teacherReportRequest++;state.teacherReportLoaded=false;state.teacherReportLoading=false;state.teacherReportData=null;state.teacherReportPrograms=[];state.originalReportFilters={};teacherSchoolRequest++;teacherSchoolSaving=false;state.teacherSchoolLoaded=false;state.teacherSchoolLoading=false;state.teacherSchool=null;state.teacherSchoolTab='general';liveAdminReportRequest++;state.liveAdminReportsLoaded=false;state.liveAdminReportsLoading=false;state.liveAdminReportsData=null;state.liveAdminReportFilters={analysis:{},reports:{}};adminResultsRequest++;state.adminResultsLoaded=false;state.adminResultsLoading=false;state.adminResultsRows=[];state.adminResultsView='groups';state.adminResultGroupFilters={};state.adminResultFilters={};state.adminResultsPage=0;adminDashboardRequest++;state.adminDashboardLoaded=false;state.adminDashboardLoading=false;state.adminDashboardReport=null;state.dashboardFilters={};state.adminSchoolLoaded=false;state.adminSchoolLoading=false;state.adminSchoolReport=null;state.adminSchoolFilters={};state.adminSchoolProvinces=[];adminSchoolRequest++;stopRegistrationCheck();loginGeneration++;loginPending=false;window.MfuApi?.logout();if(['register','password','sent','confirmed'].includes(view)){authRole='teacher';state.auth=view;referenceAuth(view);if(view==='sent')startRegistrationCheck();return;}get('authRoot').classList.remove('auth-reference');get('authRoot').removeAttribute('data-auth-step');authRole=role;state.auth=view;document.body.classList.add('auth-mode');document.querySelector('.app-shell').classList.add('hidden');get('authRoot').classList.remove('hidden');const titles={login:role==='admin'?'ระบบสำหรับผู้ดูแลระบบ (Admin)':'ระบบสำหรับครูแนะแนว มหาวิทยาลัยแม่ฟ้าหลวง',register:'ลงทะเบียนขอเข้าใช้งานระบบครูแนะแนว',reset:'ขอรับรหัสผ่านใหม่',password:'ตั้งรหัสผ่านเพื่อเข้าใช้งานระบบ',sent:'ส่งคำขอตัวอย่างสำเร็จ',confirmed:'ตัวอย่างหน้ายืนยันอีเมล'};get('authRoot').innerHTML=`<button class="btn btn-outline auth-switch" data-ui="switch-role">${role==='teacher'?'เข้าสู่ระบบสำหรับแอดมิน':'เข้าสู่ระบบสำหรับครูแนะแนว'}</button><section class="auth-card"><div class="auth-brand"><img src="assets/crest.png" alt="ตรามหาวิทยาลัยแม่ฟ้าหลวง"><p>มหาวิทยาลัยแม่ฟ้าหลวง<br><small>MAE FAH LUANG UNIVERSITY</small></p></div><h1>${titles[view]}</h1><p class="auth-subtitle">เข้าสู่ระบบเพื่อจัดการข้อมูลโควตาและประสานงานเครือข่าย</p>${view==='sent'?`<p>ในระบบจริงจะส่งลิงก์ไปยังอีเมล แต่โหมดนี้ไม่ได้ส่งอีเมล</p>${btn('ดูตัวอย่างหน้ายืนยันอีเมล','auth-confirm','btn-primary btn-block')}`:view==='confirmed'?`<div class="success-state">✓ หน้าตัวอย่างยืนยันอีเมล</div><p>ยังไม่มีการยืนยันบัญชีจริง</p>${btn('กลับเข้าสู่ระบบ','auth-login','btn-primary btn-block')}`:`<form id="authForm" class="form-grid">${view==='register'?select('จังหวัดโรงเรียน','province',['เชียงราย','เชียงใหม่'])+select('โรงเรียน','school',schools.filter(s=>s.subdistrict.district.province.name==='เชียงราย').map(s=>s.name))+select('คำนำหน้า','prefix',['นางสาว','นาง','นาย'])+field('ชื่อ','firstName','','text',true)+field('นามสกุล','lastName','','text',true)+field('ตำแหน่ง','positionTitle','','text',true)+field('โทรศัพท์','phone','','tel',true):''}${view!=='password'?`<div class="full">${field('อีเมล','email','','email',true)}</div>`:''}${view==='login'||view==='password'?`<div class="full password-field">${field('รหัสผ่าน','password','','password',true,'minlength="8" autocomplete="'+(view==='password'?'new-password':'current-password')+'"')}${btn(
+ function auth(view='login',role=authRole){teacherApplicantRequest++;state.teacherApplicantLoaded=false;state.teacherApplicantLoading=false;state.teacherApplicantReport=null;state.teacherApplicantCatalog=[];state.teacherApplicantFilters={};if(state.schoolLogoUrl){URL.revokeObjectURL(state.schoolLogoUrl);state.schoolLogoUrl=null;}state.teacherSchoolRefs=null;teacherReportRequest++;state.teacherReportLoaded=false;state.teacherReportLoading=false;state.teacherReportData=null;state.teacherReportPrograms=[];state.originalReportFilters={};teacherSchoolRequest++;teacherSchoolSaving=false;state.teacherSchoolLoaded=false;state.teacherSchoolLoading=false;state.teacherSchool=null;state.teacherSchoolTab='general';liveAdminReportRequest++;state.liveAdminReportsLoaded=false;state.liveAdminReportsLoading=false;state.liveAdminReportsData=null;state.liveAdminReportFilters={analysis:{},reports:{}};adminResultsRequest++;state.adminResultsLoaded=false;state.adminResultsLoading=false;state.adminResultsRows=[];state.adminResultsView='groups';state.adminResultGroupFilters={};state.adminResultFilters={};state.adminResultsPage=0;adminDashboardRequest++;state.adminDashboardLoaded=false;state.adminDashboardLoading=false;state.adminDashboardReport=null;state.dashboardFilters={};state.adminSchoolLoaded=false;state.adminSchoolLoading=false;state.adminSchoolReport=null;state.adminSchoolFilters={};state.adminSchoolProvinces=[];adminSchoolRequest++;stopRegistrationCheck();loginGeneration++;loginPending=false;window.MfuApi?.logout();if(['register','password','sent','confirmed'].includes(view)){authRole='teacher';state.auth=view;referenceAuth(view);if(view==='sent')startRegistrationCheck();return;}get('authRoot').classList.remove('auth-reference');get('authRoot').removeAttribute('data-auth-step');authRole=role;state.auth=view;document.body.classList.add('auth-mode');document.querySelector('.app-shell').classList.add('hidden');get('authRoot').classList.remove('hidden');const titles={login:role==='admin'?'ระบบสำหรับผู้ดูแลระบบ (Admin)':'ระบบสำหรับครูแนะแนว มหาวิทยาลัยแม่ฟ้าหลวง',register:'ลงทะเบียนขอเข้าใช้งานระบบครูแนะแนว',reset:'ขอรับรหัสผ่านใหม่',password:'ตั้งรหัสผ่านเพื่อเข้าใช้งานระบบ',sent:'ส่งคำขอตัวอย่างสำเร็จ',confirmed:'ตัวอย่างหน้ายืนยันอีเมล'};get('authRoot').innerHTML=`<button class="btn btn-outline auth-switch" data-ui="switch-role">${role==='teacher'?'เข้าสู่ระบบสำหรับแอดมิน':'เข้าสู่ระบบสำหรับครูแนะแนว'}</button><section class="auth-card"><div class="auth-brand"><img src="assets/crest.png" alt="ตรามหาวิทยาลัยแม่ฟ้าหลวง"><p>มหาวิทยาลัยแม่ฟ้าหลวง<br><small>MAE FAH LUANG UNIVERSITY</small></p></div><h1>${titles[view]}</h1><p class="auth-subtitle">เข้าสู่ระบบเพื่อจัดการข้อมูลโควตาและประสานงานเครือข่าย</p>${view==='sent'?`<p>ในระบบจริงจะส่งลิงก์ไปยังอีเมล แต่โหมดนี้ไม่ได้ส่งอีเมล</p>${btn('ดูตัวอย่างหน้ายืนยันอีเมล','auth-confirm','btn-primary btn-block')}`:view==='confirmed'?`<div class="success-state">✓ หน้าตัวอย่างยืนยันอีเมล</div><p>ยังไม่มีการยืนยันบัญชีจริง</p>${btn('กลับเข้าสู่ระบบ','auth-login','btn-primary btn-block')}`:`<form id="authForm" class="form-grid">${view==='register'?select('จังหวัดโรงเรียน','province',['เชียงราย','เชียงใหม่'])+select('โรงเรียน','school',schools.filter(s=>s.subdistrict.district.province.name==='เชียงราย').map(s=>s.name))+select('คำนำหน้า','prefix',['นางสาว','นาง','นาย'])+field('ชื่อ','firstName','','text',true)+field('นามสกุล','lastName','','text',true)+field('ตำแหน่ง','positionTitle','','text',true)+field('โทรศัพท์','phone','','tel',true):''}${view!=='password'?`<div class="full">${field('อีเมล','email','','email',true)}</div>`:''}${view==='login'||view==='password'?`<div class="full password-field">${field('รหัสผ่าน','password','','password',true,'minlength="8" autocomplete="'+(view==='password'?'new-password':'current-password')+'"')}${btn(
   '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg>',
   'toggle-password',
   'btn-outline',
@@ -622,16 +622,9 @@ document.addEventListener('reset', e => {
     }
 
     if (e.target.id === 'applicantFilter') {
-        const form = e.target;
-        state.applicantFilters = {};
-        state.listPage = 1;
-
-        setTimeout(() => {
-            if (get('applicantFilter') !== form) return;
-
-            // Reset finishes before submitting the cleared search.
-            form.requestSubmit();
-        }, 0);
+        state.teacherApplicantFilters={};
+        state.teacherApplicantPage=0;
+        void loadTeacherApplicantSearch();
     }
 
     if (e.target.id === 'calendarFilter') {
@@ -659,7 +652,7 @@ document.addEventListener('reset', e => {
  case 'school-general':if(!teacherSchoolSaving){state.teacherSchoolTab='general';render('schools');}break;
  case 'school-director':if(!teacherSchoolSaving){state.teacherSchoolTab='director';render('schools');}break;case 'teacher-school-retry':void loadTeacherSchool();break;case 'teacher-school-cancel':if(!teacherSchoolSaving)render('schools');break;
  case 'unused-director':get('schoolEditor').innerHTML='<div class="notice">Entity School ที่ส่งมายังไม่มีข้อมูลผู้บริหาร วุฒิการศึกษา อีเมล/โทรศัพท์โรงเรียน หรือรูปโรงเรียน จึงรอ API ก่อนบันทึกส่วนนี้</div>';break;
- case 'search-tab':state.searchTab=b.dataset.tab;render('applicants');break;case 'own-school-stats':render('own-school-stats');break;case 'reset-school-lookup':get('ownSchoolFilter').reset();get('ownSchoolRows').innerHTML=ownSchoolRows();break;case 'report-list-page':state.reportListPage=+b.dataset.number;get('originalReportResults').innerHTML=originalReportResults();break;case 'report-tab':state.reportListPage=1;state.reportTab=b.dataset.tab;state.originalReportFilters={};state.teacherReportLoaded=false;state.teacherReportData=null;render('overview');break;case 'teacher-report-retry':void loadTeacherOverviewReport();break;case 'project-interest-detail':{const ids=new Set(reportInterestList().filter(i=>i.program.programId===+b.dataset.id).map(i=>i.applicant.applicantId));openModal('ผู้สนใจ '+esc(programs.find(p=>p.programId===+b.dataset.id)?.programName),selectionTable(scope(selections).filter(s=>ids.has(s.applicant.applicantId))));break;}case 'remove-photo':toast('ยังไม่เปิดใช้งานการลบรูปโปรไฟล์');break;case 'renew-start':void startRenewal();break;case 'renew-next':if(!renewalPending&&state.role==='teacher'&&state.renewal<3&&(state.renewal!==2||state.profile.isEmailVerified===true)){state.renewal++;render('renew');}break;case 'renew-back':if(!renewalPending&&state.renewal>1&&state.renewal<4){state.renewal--;render('renew');}break;
+ case 'teacher-applicants-retry':void loadTeacherApplicantSearch();break;case 'teacher-school-applicants':showOwnSchoolDetails();break;case 'search-tab':state.searchTab=b.dataset.tab;render('applicants');break;case 'own-school-stats':render('own-school-stats');break;case 'reset-school-lookup':get('ownSchoolFilter').reset();get('ownSchoolRows').innerHTML=ownSchoolRows();break;case 'report-list-page':state.reportListPage=+b.dataset.number;get('originalReportResults').innerHTML=originalReportResults();break;case 'report-tab':state.reportListPage=1;state.reportTab=b.dataset.tab;state.originalReportFilters={};state.teacherReportLoaded=false;state.teacherReportData=null;render('overview');break;case 'teacher-report-retry':void loadTeacherOverviewReport();break;case 'project-interest-detail':{const ids=new Set(reportInterestList().filter(i=>i.program.programId===+b.dataset.id).map(i=>i.applicant.applicantId));openModal('ผู้สนใจ '+esc(programs.find(p=>p.programId===+b.dataset.id)?.programName),selectionTable(scope(selections).filter(s=>ids.has(s.applicant.applicantId))));break;}case 'remove-photo':toast('ยังไม่เปิดใช้งานการลบรูปโปรไฟล์');break;case 'renew-start':void startRenewal();break;case 'renew-next':if(!renewalPending&&state.role==='teacher'&&state.renewal<3&&(state.renewal!==2||state.profile.isEmailVerified===true)){state.renewal++;render('renew');}break;case 'renew-back':if(!renewalPending&&state.renewal>1&&state.renewal<4){state.renewal--;render('renew');}break;
  case 'renew-confirm':void confirmRenewal(b);break;
  case 'export-applicant-page': {
     if (state.role !== 'teacher' || !get('applicantFilter')) break;
@@ -740,72 +733,10 @@ document.addEventListener('reset', e => {
     })();
 
     break;
-}case 'admin-applicant-page':state.adminApplicantPage=+b.dataset.number;get('adminApplicantRows').innerHTML=adminApplicantTable();break;case 'admin-post-page':state.adminPostPage=+b.dataset.number;get('postRows').innerHTML=adminPostRows(state.adminFilteredPosts);break;case 'list-page': {
-    if (state.role !== 'teacher' || b.disabled) break;
-
-    const page = Number(b.dataset.number);
-    const previous = state.applicantSearchResult;
-    const form = get('applicantFilter');
-
-    if (!form || !previous ||
-        !Number.isInteger(page) ||
-        page < 0 || page >= previous.totalPages) {
-        break;
-    }
-
-    const version = (state.applicantSearchVersion || 0) + 1;
-    state.applicantSearchVersion = version;
-    b.disabled = true;
-
-    void (async () => {
-        try {
-            const result = await window.MfuApi.request(
-                'ApplicantController.searchStudents',
-                {
-                    query: {
-                        keyword: state.applicantSearchKeyword || '',
-                        page,
-                        size: previous.pageSize
-                    }
-                }
-            );
-
-            if (version !== state.applicantSearchVersion ||
-                state.role !== 'teacher' ||
-                get('applicantFilter') !== form) {
-                return;
-            }
-
-            if (!Array.isArray(result?.content) ||
-                !Number.isInteger(result.currentPage) ||
-                !Number.isInteger(result.totalPages) ||
-                !Number.isInteger(result.totalItems)) {
-                throw new Error('รูปแบบข้อมูลผู้สมัครจาก Backend ไม่ถูกต้อง');
-            }
-
-            state.applicantSearchResult = result;
-            get('selectionRows').innerHTML = pagedSelections();
-        } catch (error) {
-            if (version === state.applicantSearchVersion &&
-                get('applicantFilter') === form) {
-                toast(error.message || 'โหลดหน้าผู้สมัครไม่สำเร็จ');
-            }
-        } finally {
-            if (b.isConnected) b.disabled = false;
-
-            const searchButton = form.querySelector('button.btn-primary');
-            if (version === state.applicantSearchVersion &&
-                searchButton?.isConnected) {
-                searchButton.disabled = false;
-            }
-        }
-    })();
-
-    break;
-}case 'calendar-day':showEvent(b.dataset.date);break;case 'chart-detail':chartDetail(b.dataset);break;
+}case 'admin-applicant-page':state.adminApplicantPage=+b.dataset.number;get('adminApplicantRows').innerHTML=adminApplicantTable();break;case 'admin-post-page':state.adminPostPage=+b.dataset.number;get('postRows').innerHTML=adminPostRows(state.adminFilteredPosts);break;case 'list-page':{const page=Number(b.dataset.number);if(state.role==='teacher'&&Number.isInteger(page)&&page>=0){state.teacherApplicantPage=page;updateTeacherApplicantPage();if(get('selectionRows'))get('selectionRows').innerHTML=pagedSelections();}break;}case 'calendar-day':showEvent(b.dataset.date);break;case 'chart-detail':chartDetail(b.dataset);break;
  }});
  document.addEventListener('submit',async e=>{const form=e.target;if(!['authForm','profileForm','postForm','schoolForm','otpForm','renewForm','applicantFilter','postFilter','adminPostFilter','schoolFilter','reportFilter','calendarFilter','directorForm','originalReportFilter','ownSchoolFilter','adminReportFilter','adminDashboardFilter','adminResultFilter','adminApplicantFilter','adminStudentFilter'].includes(form.id))return;e.preventDefault();const d=Object.fromEntries(new FormData(form));switch(form.id){
- case 'adminDashboardFilter':{const year=d.academicYear.trim();const days=Number(d.days);if((year&&!/^[0-9]{4}$/.test(year))||![7,30,90,365].includes(days)){toast('กรุณาตรวจสอบปีการศึกษาและช่วงเวลา');break;}state.dashboardFilters={academicYear:year,days};void loadAdminDashboard();break;}case 'adminResultFilter':if(state.adminResultsView==='applicants'){state.adminResultFilters=d;}else{state.adminResultGroupFilters=d;}state.adminResultsPage=0;render('results');break;case 'adminApplicantFilter':state.adminApplicantPage=1;state.adminFilters=d;get('adminApplicantRows').innerHTML=adminApplicantRows(d);break;case 'adminStudentFilter':get('adminStudentRows').innerHTML=selectionTable(selections.filter(s=>(!d.query||(s.applicant.firstName+' '+s.applicant.lastName+' '+s.applicant.applicantId).includes(d.query))&&(d.school==='ทุกโรงเรียน'||s.applicant.school.name===d.school)));break;case 'adminReportFilter':state.liveAdminReportFilters={...state.liveAdminReportFilters,[state.page]:{round:d.round||'',region:d.region||'',period:d.period||''}};render(state.page);break;case 'originalReportFilter':state.reportListPage=1;state.originalReportFilters=d;void loadTeacherOverviewReport();break;case 'ownSchoolFilter':get('ownSchoolRows').innerHTML=ownSchoolRows(d);break;case 'directorForm':toast('ยังไม่เปิดใช้งานการบันทึกข้อมูลผู้อำนวยการ');break;
+ case 'adminDashboardFilter':{const year=d.academicYear.trim();const days=Number(d.days);if((year&&!/^[0-9]{4}$/.test(year))||![7,30,90,365].includes(days)){toast('กรุณาตรวจสอบปีการศึกษาและช่วงเวลา');break;}state.dashboardFilters={academicYear:year,days};void loadAdminDashboard();break;}case 'adminResultFilter':if(state.adminResultsView==='applicants'){state.adminResultFilters=d;}else{state.adminResultGroupFilters=d;}state.adminResultsPage=0;render('results');break;case 'adminApplicantFilter':state.adminApplicantPage=1;state.adminFilters=d;get('adminApplicantRows').innerHTML=adminApplicantRows(d);break;case 'adminStudentFilter':get('adminStudentRows').innerHTML=selectionTable(selections.filter(s=>(!d.query||(s.applicant.firstName+' '+s.applicant.lastName+' '+s.applicant.applicantId).includes(d.query))&&(d.school==='ทุกโรงเรียน'||s.applicant.school.name===d.school)));break;case 'adminReportFilter':state.liveAdminReportFilters={...state.liveAdminReportFilters,[state.page]:{round:d.round||'',region:d.region||'',period:d.period||''}};render(state.page);break;case 'originalReportFilter':state.reportListPage=1;state.originalReportFilters=d;void loadTeacherOverviewReport();break;case 'ownSchoolFilter':get('ownSchoolRows').innerHTML=ownSchoolRows(d);break;case 'directorForm':await saveSchoolPrincipal(form,d);break;
  case 'calendarFilter':state.calendarFilters=d;calendar();break;
 case 'authForm':
     if (state.auth === 'login') {
@@ -1072,56 +1003,7 @@ case 'postForm': {
 } case 'schoolForm':await saveTeacherSchool(form,d);break;
  case 'otpForm':toast('กรุณาใช้ขั้นตอนต่ออายุจากบัญชีที่ยืนยันอีเมลแล้ว');break;
  case 'renewForm':prepareRenewal(d);break;
-case 'applicantFilter': {
-    const keyword = (d.query || '').trim();
-    const requestVersion = (state.applicantSearchVersion || 0) + 1;
-    state.applicantSearchVersion = requestVersion;
-
-    const button = form.querySelector('button.btn-primary');
-    if (button) button.disabled = true;
-
-    try {
-        const result = await window.MfuApi.request(
-            'ApplicantController.searchStudents',
-            {
-                query: {
-                    keyword,
-                    page: 0,
-                    size: 5
-                }
-            }
-        );
-
-        if (requestVersion !== state.applicantSearchVersion) break;
-        if (state.role !== 'teacher' || state.auth !== 'login') break;
-
-        if (!Array.isArray(result?.content) ||
-            !Number.isInteger(result.currentPage) ||
-            !Number.isInteger(result.totalPages) ||
-            !Number.isInteger(result.totalItems)) {
-            throw new Error('รูปแบบข้อมูลผู้สมัครจาก Backend ไม่ถูกต้อง');
-        }
-
-        state.applicantSearchResult = result;
-        state.applicantSearchKeyword = keyword;
-
-        if (get('applicantFilter') === form && get('selectionRows')) {
-            get('selectionRows').innerHTML = pagedSelections();
-        }
-    } catch (error) {
-        if (requestVersion === state.applicantSearchVersion &&
-            get('applicantFilter') === form) {
-            toast(error.message || 'ค้นหาผู้สมัครไม่สำเร็จ');
-        }
-    } finally {
-        if (button && button.isConnected &&
-            requestVersion === state.applicantSearchVersion) {
-            button.disabled = false;
-        }
-    }
-
-    break;
-} case 'unused-applicantFilter':get('selectionRows').innerHTML=selectionTable(scope(selections).filter(s=>(s.applicant.firstName+' '+s.applicant.lastName+' '+s.applicant.applicantId).includes(d.query.trim())&&s.applicant.academicYear===+d.year&&(!d.round||d.round==='ทุกรอบ'||d.round===s.entryGroup.entrygroupName)&&(d.status==='ทั้งหมด'||d.status===s.status.description)));break;
+case 'applicantFilter':state.teacherApplicantFilters={round:d.round||'',year:d.year||'',program:d.program||'',query:d.query||''};await loadTeacherApplicantSearch();break; case 'unused-applicantFilter':get('selectionRows').innerHTML=selectionTable(scope(selections).filter(s=>(s.applicant.firstName+' '+s.applicant.lastName+' '+s.applicant.applicantId).includes(d.query.trim())&&s.applicant.academicYear===+d.year&&(!d.round||d.round==='ทุกรอบ'||d.round===s.entryGroup.entrygroupName)&&(d.status==='ทั้งหมด'||d.status===s.status.description)));break;
 case 'postFilter': {
     const query = (d.query || '').trim().toLowerCase();
 
@@ -1535,44 +1417,8 @@ function applicantProgramChart() {
             ${applicantProgramChart()}
         </div>
 
-        <form id="applicantFilter" class="filter-panel flat-filter">
-            <label>
-                รอบการสมัคร TCAS
-                <select name="round" disabled
-                    title="ยังไม่เปิดใช้งานตัวกรองนี้">
-                    <option value="">ทุกรอบ</option>
-                </select>
-            </label>
+        ${teacherApplicantFiltersMarkup()}
 
-            <label>
-                ปีการศึกษา
-                <select name="year" disabled
-                    title="ยังไม่เปิดใช้งานตัวกรองนี้">
-                    <option value="">ทุกปีการศึกษา</option>
-                </select>
-            </label>
-
-            <label>
-                สถานะการสมัคร
-                <select name="status" disabled
-                    title="ยังไม่เปิดใช้งานตัวกรองนี้">
-                    <option value="">ทุกสถานะ</option>
-                </select>
-            </label>
-
-            ${field(
-                'ชื่อ-สกุล / เลขประจำตัวประชาชน',
-                'query',
-                state.applicantSearchKeyword || ''
-            )}
-
-            <button class="btn btn-outline" type="reset">
-                ล้างตัวกรอง
-            </button>
-            <button class="btn btn-primary" type="submit">
-                ค้นหา
-            </button>
-        </form>
 
         ${panel(`
             <div class="section-caption">
@@ -1594,6 +1440,8 @@ function applicantProgramChart() {
 
  function filteredSelections(){const d=state.applicantFilters||{};return scope(selections).filter(s=>(!d.year||s.applicant.academicYear===+d.year)&&(!d.query||(s.applicant.firstName+' '+s.applicant.lastName+' '+s.applicant.applicantId).includes(d.query.trim()))&&(!d.status||d.status==='ทั้งหมด'||d.status===s.status.description)&&(!d.round||d.round==='ทุกรอบ'||d.round===s.entryGroup.entrygroupName));}
 function pagedSelections() {
+    if(state.teacherApplicantLoading)return '<p role="status">กำลังโหลดข้อมูลผู้สมัคร…</p>';
+    if(state.teacherApplicantError)return `<p role="alert">${esc(state.teacherApplicantError)}</p>${btn('ลองอีกครั้ง','teacher-applicants-retry','btn-primary')}`;
     const result = state.applicantSearchResult;
 
     if (!result || !Array.isArray(result.content)) {
@@ -1702,8 +1550,30 @@ ${field(
     ${state.profile.pendingEmail ? `<small class="muted">รอยืนยันอีเมล: ${esc(state.profile.pendingEmail)}</small>` : ''}
 </div>${field('โทรศัพท์','phone',state.profile.phone,'tel',true,'maxlength="20"')}${field('โรงเรียนที่สังกัด (อ่านอย่างเดียว)','school',ownSchool().name,'text',false,'readonly')}${field('รหัสโรงเรียน (อ่านอย่างเดียว)','schoolCode',ownSchool().schoolCode,'text',false,'readonly')}<small class="full muted">หากต้องการแก้ไขโรงเรียนที่สังกัด กรุณาติดต่อผู้ดูแลระบบ</small><div class="form-actions full">${btn('ยกเลิก','nav','btn-outline','data-target="profile"')}<button class="btn btn-primary">บันทึกข้อมูล</button></div></form></article></div>`;}
  const lookupTabs=active=>`<div class="tabs original-tabs"><button class="tab ${active==='applicants'?'active':''}" data-ui="search-tab" data-tab="applicants">ข้อมูลผู้สมัคร</button><button class="tab ${active==='schools'?'active':''}" data-ui="search-tab" data-tab="schools">ข้อมูลโรงเรียน</button></div>`;
- function schoolLookup(){return heading('ค้นหาข้อมูลโรงเรียน')+lookupTabs('schools')+panel(`<form id="ownSchoolFilter" class="lookup-filter form-grid">${select('จังหวัด','province',['ทุกจังหวัด',ownSchool().subdistrict.district.province.name])}${select('สังกัด','type',['ทั้งหมด (รัฐบาล / เอกชน / สาธิต)',ownSchool().schoolType])}<label class="lookup-query">ชื่อโรงเรียน<input name="query" type="search" placeholder="พิมพ์ชื่อโรงเรียน (Autocomplete)"></label><div class="form-actions">${btn('ล้างตัวกรอง','reset-school-lookup')}<button class="btn btn-primary">ค้นหา</button></div></form>`)+`<p class="list-caption">รายชื่อโรงเรียนที่คุณมีสิทธิ์เข้าถึง</p><div class="school-notice">ท่านสามารถดูข้อมูลผู้สมัครและเนื้อหาได้เฉพาะโรงเรียนของท่านเท่านั้น</div><div id="ownSchoolRows">${ownSchoolRows()}</div>`;}
- function ownSchoolRows(filters={}){const s=ownSchool();const match=(!filters.query||s.name.includes(filters.query.trim()))&&(!filters.province||filters.province==='ทุกจังหวัด'||filters.province===s.subdistrict.district.province.name)&&(!filters.type||filters.type.startsWith('ทั้งหมด')||filters.type===s.schoolType);return panel(table(['ตรา','รหัสโรงเรียน','ชื่อโรงเรียน','จังหวัด','สังกัด','ผู้สมัคร 2569','รายละเอียด'],match?[[`<span class="school-monogram">ร</span>`,esc(s.schoolCode),esc(s.name),esc(s.subdistrict.district.province.name),esc(s.schoolType),scope(applicants).length,btn('ดูรายละเอียด','own-school-stats','btn-primary')]]:[]));}
+ function schoolLookup(){
+    const school=ownSchool(),province=school.subdistrict?.district?.province?.name||'ยังไม่ระบุจังหวัด';
+    return heading('ค้นหาข้อมูลโรงเรียน')+lookupTabs('schools')+panel(`<form id="ownSchoolFilter" class="lookup-filter form-grid">${select('จังหวัด','province',['ทุกจังหวัด',province])}${select('สังกัด','type',['ทั้งหมด (รัฐบาล / เอกชน / สาธิต)',school.schoolType||'ยังไม่ระบุสังกัด'])}<label class="lookup-query">ชื่อโรงเรียน<input name="query" type="search" placeholder="พิมพ์ชื่อโรงเรียน"></label><div class="form-actions">${btn('ล้างตัวกรอง','reset-school-lookup')}<button class="btn btn-primary">ค้นหา</button></div></form>`)+`<p class="list-caption">รายชื่อโรงเรียนที่คุณมีสิทธิ์เข้าถึง</p><div class="school-notice">ท่านสามารถดูข้อมูลผู้สมัครและเนื้อหาได้เฉพาะโรงเรียนของท่านเท่านั้น</div><div id="ownSchoolRows">${ownSchoolRows()}</div>`;
+ }
+
+ function showOwnSchoolDetails(){
+    if(state.role!=='teacher')return;
+    const school=ownSchool(),count=state.applicantOverview?.totalApplicants;
+    openModal('รายละเอียดโรงเรียน',`<dl>
+        <dt>ชื่อโรงเรียน</dt><dd>${esc(school.name||'—')}</dd>
+        <dt>รหัสโรงเรียน</dt><dd>${esc(school.schoolCode||'—')}</dd>
+        <dt>จังหวัด</dt><dd>${esc(school.subdistrict?.district?.province?.name||'ยังไม่ระบุจังหวัด')}</dd>
+        <dt>สังกัด / ประเภทโรงเรียน</dt><dd>${esc(school.schoolType||'ยังไม่ระบุสังกัด')}</dd>
+        <dt>จำนวนผู้สมัคร (ทุกปีการศึกษา)</dt><dd>${Number.isInteger(count)?count:'—'}</dd>
+    </dl>`);
+ }
+
+ function ownSchoolRows(filters={}){
+    const school=ownSchool(),province=school.subdistrict?.district?.province?.name||'ยังไม่ระบุจังหวัด',type=school.schoolType||'ยังไม่ระบุสังกัด';
+    const match=(!filters.query||school.name.toLowerCase().includes(filters.query.trim().toLowerCase()))&&(!filters.province||filters.province==='ทุกจังหวัด'||filters.province===province)&&(!filters.type||filters.type.startsWith('ทั้งหมด')||filters.type===type);
+    const count=state.applicantOverview?.totalApplicants;
+    return panel(table(['ตรา','รหัสโรงเรียน','ชื่อโรงเรียน','จังหวัด','สังกัด','ผู้สมัคร (ทุกปี)','รายละเอียด'],match?[[`<span class="school-monogram">ร</span>`,esc(school.schoolCode||'—'),esc(school.name),esc(province),esc(type),Number.isInteger(count)?count:'—',btn('ดูรายละเอียด','teacher-school-applicants','btn-primary')]]:[]));
+ }
+
  function ownSchoolStats(){return heading('ค้นหาข้อมูลโรงเรียน')+lookupTabs('schools')+`<div class="school-notice">ข้อมูลผู้สมัครเฉพาะ ${esc(ownSchool().name)} ปีการศึกษา 2569</div>`+panel(`<div class="section-caption"><div><h2>${esc(ownSchool().name)}</h2><small>รหัส ${esc(ownSchool().schoolCode)} · ${esc(ownSchool().subdistrict.district.province.name)} · ${esc(ownSchool().schoolType)}</small></div><div>${btn('ส่งออกรายชื่อ (CSV)','export-applicants')}${btn('พิมพ์สถิติ / PDF','print')}</div></div>`)+managementAnalytics();}
  function teacherReportPage(){return backendTeacherOverviewPage();}
  function reportInterestList(){const f=state.originalReportFilters||{};return scope(interests).filter(i=>(!f.year||i.applicant.academicYear===+f.year)&&(!f.term||f.term==='ทั้งหมด'||i.applicant.term===+f.term)&&(!f.faculty||f.faculty==='ทั้งหมด'||i.program.faculty===f.faculty)&&(!f.program||f.program==='ทั้งหมด'||i.program.programName===f.program)&&(!f.query||(i.applicant.firstName+' '+i.applicant.lastName+' '+i.applicant.applicantId).includes(f.query.trim())));}
@@ -2111,6 +1981,62 @@ ${field(
     document.body.appendChild(frame);
     return frame.contentWindow;
  }
+ let teacherApplicantRequest=0;
+ async function loadTeacherApplicantSearch(){
+    if(state.role!=='teacher')return;
+    const request=++teacherApplicantRequest,generation=loginGeneration,schoolId=state.profile.schoolId;
+    const current=()=>request===teacherApplicantRequest&&generation===loginGeneration&&state.role==='teacher'&&state.profile.schoolId===schoolId;
+    const filters=state.teacherApplicantFilters||{},year=Number(filters.year)||state.profile.activeAcademicYear;
+    if(!Number.isInteger(year)){state.teacherApplicantLoaded=true;state.teacherApplicantError='ยังไม่ได้กำหนดปีการศึกษา';return;}
+    const catalog=state.teacherApplicantCatalog||[];
+    if(catalog.length){
+        const matching=catalog.filter(p=>Number(p.academicYear||p.entryGroup?.academicYear)===year);
+        if(filters.round&&!matching.some(p=>(p.round||p.entryGroup?.entrygroupName)===filters.round))filters.round='';
+        if(filters.program&&!matching.some(p=>String(p.programId)===String(filters.program)&&(!filters.round||(p.round||p.entryGroup?.entrygroupName)===filters.round)))filters.program='';
+    }
+    state.teacherApplicantFilters=filters;
+    state.teacherApplicantLoaded=true;state.teacherApplicantLoading=true;state.teacherApplicantError='';
+    if(state.page==='applicants')render('applicants');
+    try{
+        const query={academicYear:year};if(filters.round)query.admissionRound=filters.round;if(filters.program)query.programId=Number(filters.program);
+        const responses=await Promise.allSettled([
+            window.MfuApi.request('SchoolStatisticsController.getStatistics',{query}),
+            state.teacherApplicantCatalog?.length?Promise.resolve(state.teacherApplicantCatalog):window.MfuApi.request('ProgramController.getAll')
+        ]);
+        if(!current())return;
+        if(responses[0].status==='rejected')throw responses[0].reason;
+        const report=responses[0].value;
+        if(!Array.isArray(report?.applicants))throw Error('รูปแบบข้อมูลผู้สมัครไม่ถูกต้อง');
+        state.teacherApplicantReport=report;
+        if(responses[1].status==='fulfilled'&&Array.isArray(responses[1].value))state.teacherApplicantCatalog=responses[1].value;
+        state.teacherApplicantPage=0;updateTeacherApplicantPage();
+    }catch(error){if(current())state.teacherApplicantError=error.message||'ค้นหาผู้สมัครไม่สำเร็จ';}
+    finally{if(current()){state.teacherApplicantLoading=false;if(state.page==='applicants')render('applicants');}}
+ }
+ function updateTeacherApplicantPage(){
+    const query=String(state.teacherApplicantFilters?.query||'').trim().toLowerCase();
+    const rows=(state.teacherApplicantReport?.applicants||[]).filter(r=>!query||[r.fullName,r.studentId,String(r.applicantId)].some(v=>String(v||'').toLowerCase().includes(query)));
+    const totalPages=Math.ceil(rows.length/5),page=Math.max(0,Math.min(Number(state.teacherApplicantPage)||0,Math.max(0,totalPages-1)));
+    state.teacherApplicantPage=page;
+    state.applicantSearchKeyword=query;
+    state.applicantSearchResult={content:rows.slice(page*5,page*5+5).map(r=>({applicantId:r.applicantId,studentName:r.fullName,schoolName:ownSchool().name,statusDescription:r.statusDescription||'ยังไม่มีผลที่เผยแพร่',studentId:r.studentId})),currentPage:page,pageSize:5,totalPages,totalItems:rows.length};
+ }
+ function teacherApplicantFiltersMarkup(){
+    const f=state.teacherApplicantFilters||{},catalog=state.teacherApplicantCatalog||[];
+    const year=String(f.year||state.profile.activeAcademicYear||'');
+    const years=[...new Set([year,...catalog.map(p=>String(p.academicYear||p.entryGroup?.academicYear||''))].filter(Boolean))].sort((a,b)=>Number(b)-Number(a));
+    const programs=catalog.filter(p=>String(p.academicYear||p.entryGroup?.academicYear)===year);
+    const rounds=[...new Set([f.round,...programs.map(p=>p.round||p.entryGroup?.entrygroupName)].filter(Boolean))].sort();
+    const available=programs.filter(p=>!f.round||(p.round||p.entryGroup?.entrygroupName)===f.round);
+    const disabled=state.teacherApplicantLoading?'disabled':'';
+    return `<form id="applicantFilter" class="filter-panel flat-filter">
+        <label>รอบการสมัคร TCAS<select name="round"><option value="">ทุกรอบ</option>${rounds.map(r=>`<option value="${esc(r)}" ${r===f.round?'selected':''}>${esc(r)}</option>`).join('')}</select></label>
+        <label>ปีการศึกษา<select name="year">${years.map(y=>`<option value="${y}" ${y===year?'selected':''}>${y}</option>`).join('')}</select></label>
+        <label>หลักสูตรที่สนใจ<select name="program"><option value="">ทั้งหมด</option>${available.map(p=>`<option value="${p.programId}" ${String(p.programId)===f.program?'selected':''}>${esc(p.programName)}</option>`).join('')}</select></label>
+        ${field('ชื่อ–สกุล / เลขประจำตัวประชาชน','query',f.query||'','search')}
+        <button class="btn btn-outline" type="reset">ล้างตัวกรอง</button><button class="btn btn-primary" type="submit" ${disabled}>ค้นหา</button>
+    </form>`;
+ }
  let teacherReportRequest = 0;
  function teacherReportFilterValues() {
     const f=state.originalReportFilters||{};
@@ -2247,32 +2173,60 @@ ${field(
     state.teacherSchoolLoaded=true;state.teacherSchoolLoading=true;state.teacherSchoolError='';
     if(state.page==='schools')render('schools');
     try {
-        const school=await window.MfuApi.request('SchoolController.getMySchool');
+        const results=await Promise.allSettled([
+            window.MfuApi.request('SchoolDetailsController.get'),
+            window.MfuApi.request('PrefixController.getAll')
+        ]);
         if(!current())return;
+        if(results[0].status==='rejected')throw results[0].reason;
+        const school=results[0].value;
         if(!validTeacherSchool(school))throw Error('ข้อมูลโรงเรียนไม่ตรงกับบัญชีที่เข้าสู่ระบบ');
         applyTeacherSchool(school);
+        state.teacherSchoolRefs={prefixes:results[1].status==='fulfilled'&&Array.isArray(results[1].value)?results[1].value:[]};
+        if(school.hasLogo){await refreshSchoolLogo(current);}
+        else if(state.schoolLogoUrl){URL.revokeObjectURL(state.schoolLogoUrl);state.schoolLogoUrl=null;}
     }catch(error){if(current())state.teacherSchoolError=error.message||'โหลดข้อมูลโรงเรียนไม่สำเร็จ';}
     finally{if(current()){state.teacherSchoolLoading=false;if(state.page==='schools')render('schools');}}
  }
+ async function refreshSchoolLogo(current) {
+    try{
+        const blob=await window.MfuApi.request('SchoolDetailsController.logo',{responseType:'blob'});
+        if(!current())return;
+        const url=URL.createObjectURL(blob);
+        if(state.schoolLogoUrl)URL.revokeObjectURL(state.schoolLogoUrl);
+        state.schoolLogoUrl=url;
+    }catch(error){if(current())toast('บันทึกข้อมูลแล้ว แต่โหลดตราโรงเรียนไม่สำเร็จ กรุณาลองเปิดหน้านี้อีกครั้ง');}
+ }
  async function saveTeacherSchool(form,data) {
     if(teacherSchoolSaving||state.role!=='teacher'||!state.teacherSchool)return;
-    const name=String(data.name||'').trim(),schoolType=String(data.schoolType||'').trim();
-    if(!name||name.length>200||schoolType.length>50){toast('กรุณาตรวจสอบชื่อและประเภทโรงเรียน');return;}
     const school=state.teacherSchool,generation=loginGeneration;
     const current=()=>generation===loginGeneration&&state.role==='teacher'&&state.profile.schoolId===school.schoolId;
-    const button=form.querySelector('button[type="submit"]');
-    teacherSchoolSaving=true;
-    if(button){button.disabled=true;button.textContent='กำลังบันทึก…';}
-    try {
-        const updated=await window.MfuApi.request('SchoolController.updateMySchool',{
-            body:{name,schoolType:schoolType||null,subdistrict:school.subdistrict?{subdistrictId:school.subdistrict.subdistrictId}:null}
-        });
-        if(!current())return;
-        if(!validTeacherSchool(updated))throw Error('ข้อมูลโรงเรียนที่บันทึกไม่ถูกต้อง');
-        applyTeacherSchool(updated);
-        if(state.page==='schools')render('schools');
-        toast('บันทึกข้อมูลโรงเรียนแล้ว');
-    }catch(error){if(current())toast(error.message||'บันทึกข้อมูลโรงเรียนไม่สำเร็จ');}
+    const name=String(data.name||'').trim(),schoolType=String(data.schoolType||'').trim(),file=form.elements.schoolLogo?.files[0];
+    if(!name||name.length>200||schoolType.length>50){toast('กรุณาตรวจสอบชื่อและประเภทโรงเรียน');return;}
+    if(file&&(!['image/png','image/jpeg'].includes(file.type)||file.size>2*1024*1024)){toast('เลือกตราโรงเรียน JPG/PNG ไม่เกิน 2 MB');return;}
+    const payload={name,schoolType:schoolType||null,email:String(data.email||'').trim(),phone:String(data.phone||'').trim(),subdistrictId:data.subdistrictId?Number(data.subdistrictId):school.subdistrict?.subdistrictId||null};
+    teacherSchoolSaving=true;const button=form.querySelector('button[type="submit"]');if(button){button.disabled=true;button.textContent='กำลังบันทึก…';}
+    try{
+        let operation='SchoolDetailsController.save',body=payload;
+        if(file){operation='SchoolDetailsController.saveWithLogo';body=new FormData();body.append('details',new Blob([JSON.stringify(payload)],{type:'application/json'}));body.append('logo',file);}
+        const saved=await window.MfuApi.request(operation,{body});if(!current())return;
+        if(!validTeacherSchool(saved))throw Error('ข้อมูลที่บันทึกไม่ถูกต้อง');
+        applyTeacherSchool(saved);if(saved.hasLogo)await refreshSchoolLogo(current);if(!current())return;
+        if(state.page==='schools')render('schools');toast('บันทึกข้อมูลโรงเรียนแล้ว');
+    }catch(error){if(current())toast(error.message||'บันทึกข้อมูลไม่สำเร็จ');}
+    finally{if(current()){teacherSchoolSaving=false;if(button?.isConnected){button.disabled=false;button.textContent='ยืนยันข้อมูล';}}}
+ }
+ async function saveSchoolPrincipal(form,data) {
+    if(teacherSchoolSaving||state.role!=='teacher'||!state.teacherSchool)return;
+    const generation=loginGeneration,schoolId=state.profile.schoolId;
+    const current=()=>generation===loginGeneration&&state.role==='teacher'&&state.profile.schoolId===schoolId;
+    teacherSchoolSaving=true;const button=form.querySelector('button[type="submit"]');if(button){button.disabled=true;button.textContent='กำลังบันทึก…';}
+    try{
+        const payload={prefixId:Number(data.prefixId),firstName:data.firstName,lastName:data.lastName,position:data.position,education:data.education,license:data.license,email:data.email};
+        const saved=await window.MfuApi.request('SchoolDetailsController.principal',{body:payload});if(!current())return;
+        if(!validTeacherSchool(saved))throw Error('ข้อมูลที่บันทึกไม่ถูกต้อง');applyTeacherSchool(saved);
+        if(state.page==='schools')render('schools');toast('บันทึกข้อมูลผู้อำนวยการแล้ว');
+    }catch(error){if(current())toast(error.message||'บันทึกข้อมูลไม่สำเร็จ');}
     finally{if(current()){teacherSchoolSaving=false;if(button?.isConnected){button.disabled=false;button.textContent='ยืนยันข้อมูล';}}}
  }
  function backendTeacherSchoolPage() {
@@ -2286,21 +2240,27 @@ ${field(
     const summary=panel(`<div class="section-caption"><div><h2>${esc(school.name)}</h2><small>รหัส ${esc(school.schoolCode||'—')} · ${esc(province)}</small></div>${tag('ข้อมูลโรงเรียน')}</div>`);
     const tabs=`<div class="tabs school-tabs"><button type="button" class="tab ${director?'':'active'}" data-ui="school-general">ข้อมูลทั่วไป</button><button type="button" class="tab ${director?'active':''}" data-ui="school-director">ข้อมูลผู้อำนวยการสถานศึกษา</button></div>`;
     if(director){
-        return head+summary+tabs+`<div id="schoolEditor"><p class="school-notice">ยังไม่เปิดใช้งานการบันทึกข้อมูลผู้อำนวยการ</p><div class="school-stack">
-            ${field('คำนำหน้า','directorPrefix','','text',false,'disabled')}
-            ${field('ชื่อ','directorFirstName','','text',false,'disabled')}
-            ${field('นามสกุล','directorLastName','','text',false,'disabled')}
-            ${field('ตำแหน่ง','directorPosition','','text',false,'disabled')}
-            ${field('วุฒิการศึกษาสูงสุด','directorEducation','','text',false,'disabled')}
-            ${field('เลขที่ใบอนุญาตประกอบวิชาชีพ','directorLicense','','text',false,'disabled')}
-            ${field('อีเมลติดต่อ','directorEmail','','email',false,'disabled')}
-        </div></div>`;
+        const p=school.principal||{},prefixes=state.teacherSchoolRefs?.prefixes||[];
+        return head+summary+tabs+`<div id="schoolEditor"><form id="directorForm" class="school-stack">
+            <label>คำนำหน้า *<select name="prefixId" required><option value="">เลือกคำนำหน้า</option>${prefixes.map(prefix=>`<option value="${prefix.prefixId}" ${prefix.prefixId===p.prefixId?'selected':''}>${esc(prefix.prefixName)}</option>`).join('')}</select></label>
+            ${field('ชื่อ','firstName',p.firstName||'','text',true,'maxlength="100"')}
+            ${field('นามสกุล','lastName',p.lastName||'','text',true,'maxlength="100"')}
+            ${field('ตำแหน่ง','position',p.position||'','text',true,'maxlength="100"')}
+            ${field('วุฒิการศึกษาสูงสุด','education',p.education||'','text',false,'maxlength="200"')}
+            ${field('เลขที่ใบอนุญาตประกอบวิชาชีพ','license',p.license||'','text',false,'maxlength="50"')}
+            ${field('อีเมลติดต่อ','email',p.email||'','email',true,'maxlength="150"')}
+            <div class="form-actions">${btn('ยกเลิก','teacher-school-cancel','btn-outline')}<button type="submit" class="btn btn-primary">ยืนยันข้อมูล</button></div>
+        </form></div>`;
     }
     return head+summary+tabs+`<div id="schoolEditor"><form id="schoolForm" class="school-stack">
         ${field('ชื่อโรงเรียน','name',school.name,'text',true,'maxlength="200"')}
         ${field('รหัสโรงเรียน','schoolCode',school.schoolCode||'','text',false,'readonly')}
         ${field('สังกัด / ประเภทโรงเรียน','schoolType',school.schoolType||'','text',false,'maxlength="50"')}
         ${field('จังหวัด','province',province,'text',false,'readonly')}
+        ${field('อีเมลโรงเรียน','email',school.email||'','email',true,'maxlength="150"')}
+        ${field('โทรศัพท์โรงเรียน','phone',school.phone||'','tel',true,'maxlength="20"')}
+        ${field('ตราโรงเรียน · JPG/PNG ไม่เกิน 2 MB','schoolLogo','','file',false,'accept="image/png,image/jpeg"')}
+        ${state.schoolLogoUrl?`<img src="${esc(state.schoolLogoUrl)}" alt="ตราโรงเรียน" style="max-width:120px;max-height:120px;object-fit:contain">`:''}
         <div class="form-actions">${btn('ยกเลิก','teacher-school-cancel','btn-outline')}<button type="submit" class="btn btn-primary">ยืนยันข้อมูล</button></div>
     </form></div>`;
  }

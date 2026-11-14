@@ -1,6 +1,12 @@
 /* Routes extracted from the supplied Java controllers. No UI or fixture changes. */
 window.MfuApi = (() => {
 const routes = {
+"SchoolDetailsController.get":{"method": "GET", "path": "/api/schools/me/details"},
+"SchoolDetailsController.save":{"method": "PUT", "path": "/api/schools/me/details"},
+"SchoolDetailsController.saveWithLogo":{"method": "POST", "path": "/api/schools/me/details/general"},
+"SchoolDetailsController.principal":{"method": "PUT", "path": "/api/schools/me/details/principal"},
+"SchoolDetailsController.logo":{"method": "GET", "path": "/api/schools/me/details/logo"},
+
   "AdminController.getAll": {
     "method": "GET",
     "path": "/api/admins"
