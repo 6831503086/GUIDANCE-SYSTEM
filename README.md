@@ -1,5 +1,5 @@
 # GUIDANCE-TEACHER-SYSTEM
-    The Guidance Teacher System is a web application developed to support coordination between Mae Fah Luang University’s Admissions Office and its network of school guidance counselors. It allows counselors to access university news, admission schedules, applicant information, and reports for their own schools, while administrators can manage announcements and view system-wide statistics. The application uses HTML, CSS, and JavaScript for the frontend, Java 21 with Spring Boot for the backend, and an embedded H2 database, with JWT authentication and role-based access control to protect school-specific information.
+   
 
 ## GROUP MEMBERS
     6831503086  Naung Yoe Tun (Backend,Frontend,Database)
