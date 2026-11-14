@@ -306,3 +306,38 @@ dialog.admin-school-drawer{position:fixed;top:0;right:0;bottom:0;left:auto;margi
 body:has(#authRoot.auth-reference:not(.hidden)){overflow:hidden;overscroll-behavior:none}
 #authRoot.auth-reference{position:fixed;inset:0;width:100%;height:100dvh;min-height:0;padding:16px;overflow:hidden;overscroll-behavior:none}
 #authRoot.auth-reference .reference-auth-card{flex-shrink:0;transform-origin:center center}
+
+#authRoot .password-input-row {
+  position: relative;
+  width: 100%;
+}
+
+#authRoot .password-input-row input {
+  display: block;
+  width: 100%;
+  margin: 0;
+  padding-right: 52px;
+}
+
+#authRoot .password-input-row [data-ui="toggle-password"] {
+  position: absolute;
+  top: 50%;
+  right: 12px;
+  bottom: auto;
+  left: auto;
+  transform: translateY(-50%);
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: #7A2222;
+  box-shadow: none;
+}
+
+#authRoot .password-input-row svg {
+  display: block;
+}
