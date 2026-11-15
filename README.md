@@ -13,10 +13,10 @@ https://guidance-system-801537313339.us-central1.run.app
 
 ## GROUP MEMBERS
     6831503086  Naung Yoe Tun (Backend,Frontend,Database)
-    6831503109  Ananya Suwandee  (Database)
-    6831503111  Harry Foster  (Database)
-    6831503114  Chompunut Namkort  (Frontend,Database)
-    6831503115  Yanisa Chaiwut  (Database)
+    6831503109  Ananya Suwandee  (Database,Backend)
+    6831503111  Harry Foster  (Database,Backend)
+    6831503114  Chompunut Namkort  (Frontend,Database,Deployment)
+    6831503115  Yanisa Chaiwut  (Database,Backend)
 
 ## HOW TO RUN THE PROJECTS
 ### Requirements
@@ -98,7 +98,6 @@ Spring Boot serves both the frontend and backend. A separate frontend server is 
 In GitHub Codespaces, open the forwarded address for port 8080 from the Ports tab.
 
 ### 6. Test Accounts
-
 
 
 ### 7. Run Automated Tests
