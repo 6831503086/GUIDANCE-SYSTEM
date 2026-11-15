@@ -533,7 +533,7 @@ try {
     }
 }
  let authRole='teacher';
- function auth(view='login',role=authRole){state.adminPostLocations=null;state.adminContentFilters={};state.adminPostPage=1;schoolStatsRequest++;schoolStatsExportPending=false;state.schoolStatsLoaded=false;state.schoolStatsLoading=false;state.schoolStatsReport=null;state.schoolStatsError='';state.schoolStatsFilters={};state.schoolStatsPrograms=[];state.schoolStatsRounds=[];state.schoolStatsAppliedQuery=null;state.applicantSearchResult=null;state.teacherApplicantError='';calendarScheduleRequest++;calendarSourceRequest++;calendarPDFPending=false;state.calendarLoading=false;state.calendarError='';state.calendarApiEvents=[];state.calendarFilters={};state.calendarView='calendar';teacherProgramRequest++;programBrowse=freshProgramBrowse();teacherApplicantRequest++;state.teacherApplicantLoaded=false;state.teacherApplicantLoading=false;state.teacherApplicantReport=null;state.teacherApplicantCatalog=[];state.teacherApplicantFilters={};if(state.schoolLogoUrl){URL.revokeObjectURL(state.schoolLogoUrl);state.schoolLogoUrl=null;}state.teacherSchoolRefs=null;teacherReportRequest++;state.teacherReportLoaded=false;state.teacherReportLoading=false;state.teacherReportData=null;state.teacherReportPrograms=[];state.originalReportFilters={};teacherSchoolRequest++;teacherSchoolSaving=false;state.teacherSchoolLoaded=false;state.teacherSchoolLoading=false;state.teacherSchool=null;state.teacherSchoolTab='general';liveAdminReportRequest++;state.liveAdminReportsLoaded=false;state.liveAdminReportsLoading=false;state.liveAdminReportsData=null;state.liveAdminReportFilters={analysis:{},reports:{}};adminResultsRequest++;state.adminResultsLoaded=false;state.adminResultsLoading=false;state.adminResultsRows=[];state.adminResultsView='groups';state.adminResultGroupFilters={};state.adminResultFilters={};state.adminResultsPage=0;adminDashboardRequest++;state.adminDashboardLoaded=false;state.adminDashboardLoading=false;state.adminDashboardReport=null;state.dashboardFilters={};state.adminSchoolLoaded=false;state.adminSchoolLoading=false;state.adminSchoolReport=null;state.adminSchoolFilters={};state.adminSchoolProvinces=[];adminSchoolRequest++;stopRegistrationCheck();loginGeneration++;loginPending=false;window.MfuApi?.logout();if(['register','password','sent','confirmed','complete','reset-check','reset-invalid','reset-error'].includes(view)){authRole='teacher';state.auth=view;referenceAuth(view);if(view==='sent')startRegistrationCheck();return;}get('authRoot').classList.remove('auth-reference');get('authRoot').removeAttribute('data-auth-step');authRole=role;state.auth=view;document.body.classList.add('auth-mode');document.querySelector('.app-shell').classList.add('hidden');get('authRoot').classList.remove('hidden');const titles={login:role==='admin'?'ระบบสำหรับผู้ดูแลระบบ (Admin)':'ระบบสำหรับครูแนะแนว มหาวิทยาลัยแม่ฟ้าหลวง',register:'ลงทะเบียนขอเข้าใช้งานระบบครูแนะแนว',reset:'ขอรับรหัสผ่านใหม่',password:'ตั้งรหัสผ่านเพื่อเข้าใช้งานระบบ',sent:'ส่งคำขอตัวอย่างสำเร็จ',confirmed:'ตัวอย่างหน้ายืนยันอีเมล'};get('authRoot').innerHTML=`<button class="btn btn-outline auth-switch" data-ui="switch-role">${role==='teacher'?'เข้าสู่ระบบสำหรับแอดมิน':'เข้าสู่ระบบสำหรับครูแนะแนว'}</button><section class="auth-card"><div class="auth-brand"><img src="assets/crest.png" alt="ตรามหาวิทยาลัยแม่ฟ้าหลวง"><p>มหาวิทยาลัยแม่ฟ้าหลวง<br><small>MAE FAH LUANG UNIVERSITY</small></p></div><h1>${titles[view]}</h1><p class="auth-subtitle">เข้าสู่ระบบเพื่อจัดการข้อมูลโควตาและประสานงานเครือข่าย</p>${view==='sent'?`<p>ในระบบจริงจะส่งลิงก์ไปยังอีเมล แต่โหมดนี้ไม่ได้ส่งอีเมล</p>${btn('ดูตัวอย่างหน้ายืนยันอีเมล','auth-confirm','btn-primary btn-block')}`:view==='confirmed'?`<div class="success-state">✓ หน้าตัวอย่างยืนยันอีเมล</div><p>ยังไม่มีการยืนยันบัญชีจริง</p>${btn('กลับเข้าสู่ระบบ','auth-login','btn-primary btn-block')}`:`<form id="authForm" class="form-grid">${view==='register'?select('จังหวัดโรงเรียน','province',['เชียงราย','เชียงใหม่'])+select('โรงเรียน','school',schools.filter(s=>s.subdistrict.district.province.name==='เชียงราย').map(s=>s.name))+select('คำนำหน้า','prefix',['นางสาว','นาง','นาย'])+field('ชื่อ','firstName','','text',true)+field('นามสกุล','lastName','','text',true)+field('ตำแหน่ง','positionTitle','','text',true)+field('โทรศัพท์','phone','','tel',true):''}${view!=='password'?`<div class="full">${field('อีเมล','email','','email',true)}</div>`:''}${view==='login'||view==='password'?`<div class="full password-field">${field('รหัสผ่าน','password','','password',true,'minlength="8" autocomplete="'+(view==='password'?'new-password':'current-password')+'"')}${btn(
+ function auth(view='login',role=authRole){state.adminPostLocations=null;state.adminContentFilters={};state.adminPostPage=1;schoolStatsRequest++;schoolStatsExportPending=false;state.schoolStatsLoaded=false;state.schoolStatsLoading=false;state.schoolStatsReport=null;state.schoolStatsError='';state.schoolStatsFilters={};state.schoolStatsPrograms=[];state.schoolStatsRounds=[];state.schoolStatsAppliedQuery=null;state.applicantSearchResult=null;state.teacherApplicantError='';calendarScheduleRequest++;calendarSourceRequest++;calendarPDFPending=false;state.calendarLoading=false;state.calendarError='';state.calendarApiEvents=[];state.calendarFilters={};state.calendarView='calendar';teacherProgramRequest++;programBrowse=freshProgramBrowse();teacherApplicantRequest++;state.teacherApplicantLoaded=false;state.teacherApplicantLoading=false;state.teacherApplicantReport=null;state.teacherApplicantCatalog=[];state.teacherApplicantFilters={};if(state.schoolLogoUrl){URL.revokeObjectURL(state.schoolLogoUrl);state.schoolLogoUrl=null;}state.teacherSchoolRefs=null;teacherReportRequest++;state.teacherReportLoaded=false;state.teacherReportLoading=false;state.teacherReportData=null;state.teacherReportPrograms=[];state.originalReportFilters={};teacherSchoolRequest++;teacherSchoolSaving=false;state.teacherSchoolLoaded=false;state.teacherSchoolLoading=false;state.teacherSchool=null;state.teacherSchoolTab='general';liveAdminReportRequest++;state.liveAdminReportsLoaded=false;state.liveAdminReportsLoading=false;state.liveAdminReportsData=null;state.liveAdminReportFilters={analysis:{},reports:{}};adminResultsRequest++;state.adminResultsLoaded=false;state.adminResultsLoading=false;state.adminResultsRows=[];state.adminDatasetFilters={};state.adminResultsView='groups';state.adminResultGroupFilters={};state.adminResultFilters={};state.adminResultsPage=0;adminDashboardRequest++;state.adminDashboardLoaded=false;state.adminDashboardLoading=false;state.adminDashboardReport=null;state.dashboardFilters={};state.adminSchoolLoaded=false;state.adminSchoolLoading=false;state.adminSchoolReport=null;state.adminSchoolFilters={};state.adminSchoolProvinces=[];adminSchoolRequest++;stopRegistrationCheck();loginGeneration++;loginPending=false;window.MfuApi?.logout();if(['register','password','sent','confirmed','complete','reset-check','reset-invalid','reset-error'].includes(view)){authRole='teacher';state.auth=view;referenceAuth(view);if(view==='sent')startRegistrationCheck();return;}get('authRoot').classList.remove('auth-reference');get('authRoot').removeAttribute('data-auth-step');authRole=role;state.auth=view;document.body.classList.add('auth-mode');document.querySelector('.app-shell').classList.add('hidden');get('authRoot').classList.remove('hidden');const titles={login:role==='admin'?'ระบบสำหรับผู้ดูแลระบบ (Admin)':'ระบบสำหรับครูแนะแนว มหาวิทยาลัยแม่ฟ้าหลวง',register:'ลงทะเบียนขอเข้าใช้งานระบบครูแนะแนว',reset:'ขอรับรหัสผ่านใหม่',password:'ตั้งรหัสผ่านเพื่อเข้าใช้งานระบบ',sent:'ส่งคำขอตัวอย่างสำเร็จ',confirmed:'ตัวอย่างหน้ายืนยันอีเมล'};get('authRoot').innerHTML=`<button class="btn btn-outline auth-switch" data-ui="switch-role">${role==='teacher'?'เข้าสู่ระบบสำหรับแอดมิน':'เข้าสู่ระบบสำหรับครูแนะแนว'}</button><section class="auth-card"><div class="auth-brand"><img src="assets/crest.png" alt="ตรามหาวิทยาลัยแม่ฟ้าหลวง"><p>มหาวิทยาลัยแม่ฟ้าหลวง<br><small>MAE FAH LUANG UNIVERSITY</small></p></div><h1>${titles[view]}</h1><p class="auth-subtitle">เข้าสู่ระบบเพื่อจัดการข้อมูลโควตาและประสานงานเครือข่าย</p>${view==='sent'?`<p>ในระบบจริงจะส่งลิงก์ไปยังอีเมล แต่โหมดนี้ไม่ได้ส่งอีเมล</p>${btn('ดูตัวอย่างหน้ายืนยันอีเมล','auth-confirm','btn-primary btn-block')}`:view==='confirmed'?`<div class="success-state">✓ หน้าตัวอย่างยืนยันอีเมล</div><p>ยังไม่มีการยืนยันบัญชีจริง</p>${btn('กลับเข้าสู่ระบบ','auth-login','btn-primary btn-block')}`:`<form id="authForm" class="form-grid">${view==='register'?select('จังหวัดโรงเรียน','province',['เชียงราย','เชียงใหม่'])+select('โรงเรียน','school',schools.filter(s=>s.subdistrict.district.province.name==='เชียงราย').map(s=>s.name))+select('คำนำหน้า','prefix',['นางสาว','นาง','นาย'])+field('ชื่อ','firstName','','text',true)+field('นามสกุล','lastName','','text',true)+field('ตำแหน่ง','positionTitle','','text',true)+field('โทรศัพท์','phone','','tel',true):''}${view!=='password'?`<div class="full">${field('อีเมล','email','','email',true)}</div>`:''}${view==='login'||view==='password'?`<div class="full password-field">${field('รหัสผ่าน','password','','password',true,'minlength="8" autocomplete="'+(view==='password'?'new-password':'current-password')+'"')}${btn(
   '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg>',
   'toggle-password',
   'btn-outline',
@@ -2697,62 +2697,63 @@ ${field(
         .filter(g=>!f.publication||g.publication===f.publication)
         .sort((a,b)=>(b.round.academicYear-a.round.academicYear)||(a.round.entrygroupId-b.round.entrygroupId)||(a.quota.quotaId-b.quota.quotaId));
  }
- function backendAdminResultsPage() {
-    if (state.adminResultsView==='applicants') return backendAdminApplicantsPage();
-    const head=heading('ผลการรับสมัคร');
-    if(state.adminResultsLoading)return head+panel('<p role="status">กำลังโหลดผลการรับสมัคร…</p>');
-    if(state.adminResultsError)return head+panel(`<p role="alert">${esc(state.adminResultsError)}</p>${btn('ลองอีกครั้ง','admin-results-retry','btn-primary')}`);
-    const source=state.adminResultsRows||[],f=state.adminResultGroupFilters||{};
-    const unique=(items,key)=>[...new Map(items.map(i=>[String(i[key]),i])).values()];
-    const rounds=unique(source.map(r=>r.entryGroup),'entrygroupId');
-    const quotas=unique(source.map(r=>r.quota),'quotaId');
-    const selectOptions=(label,name,items,key,labelKey)=>`<label>${esc(label)}<select name="${name}"><option value="">ทั้งหมด</option>${items.map(i=>`<option value="${esc(i[key])}" ${String(i[key])===String(f[name]||'')?'selected':''}>${esc(i[labelKey])}</option>`).join('')}</select></label>`;
-    const filters=`<form id="adminResultFilter" class="filter-panel admin-filter">
-        ${field('ปีการศึกษา','year',f.year||'','text',false,'inputmode="numeric" pattern="[0-9]{4}" maxlength="4" placeholder="ทุกปีการศึกษา"')}
-        ${selectOptions('รอบการรับสมัคร','round',rounds,'entrygroupId','entrygroupName')}
-        ${selectOptions('โครงการ / โควตา','quota',quotas,'quotaId','quotaName')}
-        ${selectOptions('สถานะการเผยแพร่','publication',[{id:'PUBLISHED',name:'เผยแพร่แล้ว'},{id:'UNPUBLISHED',name:'ยังไม่เผยแพร่'},{id:'MIXED',name:'เผยแพร่บางส่วน'}],'id','name')}
-        <button class="btn btn-primary">ค้นหา</button>
-    </form>`;
-    const matches=groupedAdminResults(),pages=Math.ceil(matches.length/10);
-    const page=Math.max(0,Math.min(Number(state.adminResultsPage)||0,Math.max(0,pages-1)));
-    state.adminResultsPage=page;
-    const names={PUBLISHED:'เผยแพร่แล้ว',UNPUBLISHED:'ยังไม่เผยแพร่',MIXED:'เผยแพร่บางส่วน'};
-    const rows=matches.slice(page*10,page*10+10);
-    const body=rows.length?table(['โครงการ / โควตา','ปีการศึกษา','รอบการรับสมัคร','จำนวนรายการ','สถานะ','การดำเนินการ'],rows.map(g=>[
-        esc(g.quota.quotaName),esc(g.round.academicYear),esc(g.round.entrygroupName),g.total,
-        esc(names[g.publication]),btn('ดูรายชื่อ','admin-result-open','text-button',`data-round="${g.round.entrygroupId}" data-quota="${g.quota.quotaId}"`)
-    ])):'<div class="empty-state">ไม่พบผลการรับสมัครตามเงื่อนไข</div>';
-    return head+filters+`<div class="panel admin-table-panel"><div class="admin-panel-heading"><h3>กลุ่มผลการคัดเลือก</h3><small>${matches.length} กลุ่ม</small></div><div style="overflow-x:auto">${body}</div>
-    <div class="form-actions">${btn('ก่อนหน้า','admin-results-page','btn-outline',`data-page="${page-1}" ${page===0?'disabled':''}`)}<span>หน้า ${pages?page+1:0} / ${pages}</span>${btn('ถัดไป','admin-results-page','btn-outline',`data-page="${page+1}" ${page+1>=pages?'disabled':''}`)}</div></div>`;
- }
  let adminResultsRequest = 0;
- async function loadAdminResults() {
-    if (state.role !== 'admin') return;
-    const request = ++adminResultsRequest, generation = loginGeneration;
-    const current = () => request === adminResultsRequest && generation === loginGeneration && state.role === 'admin';
-    state.adminResultsLoaded = true;
-    state.adminResultsLoading = true;
-    state.adminResultsError = '';
-    if (state.page === 'results') render('results');
-    try {
-        const rows = await window.MfuApi.request('ApplicantSelectionController.getAll');
-        if (!current()) return;
-        if (!Array.isArray(rows) || !rows.every(r => Number.isSafeInteger(r.applicationId) &&
-            r.applicant && r.entryGroup && r.quota && r.status)) {
-            throw new Error('รูปแบบข้อมูลผลการรับสมัครจาก Backend ไม่ถูกต้อง');
-        }
-        state.adminResultsRows = [...rows].sort((a,b) => a.applicationId-b.applicationId);
-        state.adminResultsPage = 0;
-    } catch (error) {
-        if (current()) state.adminResultsError = error.message || 'โหลดผลการรับสมัครไม่สำเร็จ';
-    } finally {
-        if (current()) {
-            state.adminResultsLoading = false;
-            if (state.page === 'results') render('results');
-        }
-    }
+ function datasetHasErrors(d){return Number(d.errorRows)>0||['ERROR','ERRONEOUS','INVALID','FAILED'].includes(String(d.datasetStatus||'').toUpperCase());}
+ function datasetMatches(d,f){const g=d.program?.entryGroup||{};return (!f.year||String(g.academicYear)===f.year)&&(!f.round||g.entrygroupName===f.round)&&(!f.program||String(d.program?.programId)===f.program)&&(!f.status||(f.status==='ERRONEOUS'?datasetHasErrors(d):String(d.datasetStatus||'').toUpperCase()===f.status));}
+ function datasetStatusText(d){const s=String(d.datasetStatus||'').toUpperCase();return ({PUBLISHED:'เผยแพร่แล้ว',PENDING_REVIEW:'รอตรวจสอบ',UNPUBLISHED:'ยังไม่เผยแพร่',DRAFT:'ฉบับร่าง',ERROR:'ข้อมูลผิดพลาด',ERRONEOUS:'ข้อมูลผิดพลาด',INVALID:'ข้อมูลไม่ถูกต้อง',FAILED:'ไม่สำเร็จ'})[s]||d.datasetStatus||'ไม่ระบุ';}
+ function backendAdminResultsPage(){
+    const head=heading('ผลการรับสมัคร');
+    if(state.adminResultsLoading)return head+panel('<p role="status">กำลังโหลดชุดข้อมูล…</p>');
+    if(state.adminResultsError)return head+panel(`<p role="alert">${esc(state.adminResultsError)}</p>${btn('ลองอีกครั้ง','admin-results-retry','btn-primary')}`);
+    const source=state.adminResultsRows||[],f=state.adminDatasetFilters||{};
+    const option=(label,name,items)=>`<label>${esc(label)}<select name="${name}"><option value="">ทั้งหมด</option>${items.map(([id,text])=>`<option value="${esc(id)}" ${String(id)===String(f[name]||'')?'selected':''}>${esc(text)}</option>`).join('')}</select></label>`;
+    const unique=items=>[...new Map(items.map(i=>[String(i[0]),i])).values()];
+    const years=unique(source.map(d=>[d.program.entryGroup?.academicYear,d.program.entryGroup?.academicYear]).filter(i=>i[0]!=null)).sort((a,b)=>b[0]-a[0]);
+    const rounds=unique(source.map(d=>d.program.entryGroup?.entrygroupName).filter(Boolean).map(x=>[x,x]));
+    const programs=unique(source.map(d=>[d.program.programId,`${d.program.programName} · ${d.program.entryGroup?.academicYear||'—'} · ${d.program.entryGroup?.entrygroupName||'—'}`]));
+    const known=[['PUBLISHED','เผยแพร่แล้ว'],['PENDING_REVIEW','รอตรวจสอบ'],['ERRONEOUS','ข้อมูลผิดพลาด'],['UNPUBLISHED','ยังไม่เผยแพร่'],['DRAFT','ฉบับร่าง']];
+    const statuses=unique([...known,...source.filter(d=>d.datasetStatus).map(d=>[String(d.datasetStatus).toUpperCase(),datasetStatusText(d)])]);
+    const filters=`<form id="adminDatasetFilter" class="filter-panel admin-filter">${option('ปีการศึกษา','year',years)}${option('รอบการรับสมัคร','round',rounds)}${option('หลักสูตร','program',programs)}${option('สถานะชุดข้อมูล','status',statuses)}${btn('ล้างตัวกรอง','dataset-reset','btn-outline')}<button class="btn btn-primary">ค้นหา</button></form>`;
+    const matches=source.filter(d=>datasetMatches(d,f)),counts=[matches.length,matches.filter(d=>String(d.datasetStatus).toUpperCase()==='PUBLISHED').length,matches.filter(d=>String(d.datasetStatus).toUpperCase()==='PENDING_REVIEW').length,matches.filter(datasetHasErrors).length];
+    const cards=`<div class="stat-grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;margin:20px 0">${['ชุดข้อมูลทั้งหมด','เผยแพร่แล้ว','รอตรวจสอบ','ข้อมูลผิดพลาด'].map((label,i)=>`<div class="panel pad stat-card" style="margin:0;padding:24px;min-height:140px"><span>${label}</span><h2 style="font-size:32px;margin:16px 0 8px;color:#5E1A14">${counts[i]}</h2><small>ชุดข้อมูล</small></div>`).join('')}</div><p class="muted">สรุปตามตัวกรองที่ค้นหา · ชุดข้อมูลที่มีข้อผิดพลาดอาจอยู่ระหว่างรอตรวจสอบ</p>`;
+    const pages=Math.ceil(matches.length/10),page=Math.max(0,Math.min(state.adminResultsPage||0,Math.max(0,pages-1)));state.adminResultsPage=page;
+    const body=matches.length?table(['ชื่อไฟล์','หลักสูตร','ปีการศึกษา','รอบการรับสมัคร','วันที่อัปโหลด','จำนวนรายการ','สถานะ','รายละเอียด'],matches.slice(page*10,page*10+10).map(d=>[esc(d.fileName||'—'),esc(d.program.programName),esc(d.program.entryGroup?.academicYear||'—'),esc(d.program.entryGroup?.entrygroupName||'—'),esc(d.uploadedAt?.replace('T',' ')||'—'),esc(d.totalRows??0),esc(datasetStatusText(d))+(datasetHasErrors(d)?'<br><small>พบข้อมูลผิดพลาด</small>':''),btn('ดูรายละเอียด','dataset-detail','text-button',`data-id="${d.datasetId}"`)])):'<p class="empty-state" style="display:block;height:auto;min-height:0;padding:24px 0;margin:0">ไม่พบข้อมูลตามเงื่อนไข (No data found)</p>';
+    return head+filters+cards+panel(`<h3>ชุดข้อมูลผลการรับสมัคร (${matches.length})</h3><div style="overflow-x:auto">${body}</div><div class="form-actions">${btn('ก่อนหน้า','admin-results-page','btn-outline',`data-page="${page-1}" ${page===0?'disabled':''}`)}<span>หน้า ${pages?page+1:0} / ${pages}</span>${btn('ถัดไป','admin-results-page','btn-outline',`data-page="${page+1}" ${page+1>=pages?'disabled':''}`)}</div>`);
  }
+ async function loadAdminResults(){
+    if(state.role!=='admin')return;
+    const request=++adminResultsRequest,generation=loginGeneration,controller=new AbortController();
+    const current=()=>request===adminResultsRequest&&generation===loginGeneration&&state.role==='admin';
+    state.adminResultsLoaded=true;state.adminResultsLoading=true;state.adminResultsError='';state.adminResultsRows=[];
+    if(state.page==='results')render('results');
+    const timer=setTimeout(()=>controller.abort(),20000);
+    try{
+        const rows=await window.MfuApi.request('ResultDatasetController.getDatasets',{signal:controller.signal});
+        if(!current())return;
+        if(!Array.isArray(rows)||!rows.every(d=>Number.isSafeInteger(d.datasetId)&&d.datasetId>0&&d.program&&Number.isSafeInteger(d.program.programId)))throw new Error('รูปแบบข้อมูลชุดผลการรับสมัครไม่ถูกต้อง');
+        state.adminResultsRows=[...rows].sort((a,b)=>String(b.uploadedAt||'').localeCompare(String(a.uploadedAt||''))||b.datasetId-a.datasetId);state.adminResultsPage=0;
+    }catch(error){if(current())state.adminResultsError=error.name==='AbortError'?'โหลดข้อมูลนานเกินไป กรุณาลองอีกครั้ง':error.message||'โหลดชุดข้อมูลไม่สำเร็จ';}
+    finally{clearTimeout(timer);if(current()){state.adminResultsLoading=false;if(state.page==='results')render('results');}}
+ }
+ document.addEventListener('submit',event=>{
+    if(event.target.id!=='adminDatasetFilter'||state.role!=='admin')return;
+    event.preventDefault();state.adminDatasetFilters=Object.fromEntries(new FormData(event.target));state.adminResultsPage=0;render('results');
+ });
+ document.addEventListener('click',async event=>{
+    const button=event.target.closest('[data-ui]');if(!button||state.role!=='admin')return;
+    if(button.dataset.ui==='dataset-reset'){state.adminDatasetFilters={};state.adminResultsPage=0;render('results');}
+    if(button.dataset.ui!=='dataset-detail'||button.disabled)return;
+    const id=Number(button.dataset.id),generation=loginGeneration,controller=new AbortController();button.disabled=true;
+    const timer=setTimeout(()=>controller.abort(),20000);
+    try{
+        const d=await window.MfuApi.request('ResultDatasetController.getDatasetDetails',{params:{id},signal:controller.signal});
+        if(generation!==loginGeneration||state.role!=='admin'||state.page!=='results')return;
+        if(d?.datasetId!==id||!d.program)throw new Error('ไม่พบชุดข้อมูลนี้');
+        const g=d.program.entryGroup||{};
+        openModal('รายละเอียดชุดข้อมูล (อ่านอย่างเดียว)',`<dl>${[['ชื่อไฟล์',d.fileName],['หลักสูตร',d.program.programName],['ปีการศึกษา',g.academicYear],['รอบการรับสมัคร',g.entrygroupName],['วันที่อัปโหลด',d.uploadedAt?.replace('T',' ')],['จำนวนรายการ',d.totalRows??0],['สถานะ',datasetStatusText(d)],['จำนวนรายการผิดพลาด',d.errorRows??0],['รายละเอียดข้อผิดพลาด',d.errorSummary]].map(([label,value])=>`<dt>${label}</dt><dd style="white-space:pre-wrap">${esc(value??'—')}</dd>`).join('')}</dl>`);
+    }catch(error){if(generation===loginGeneration&&state.role==='admin'&&state.page==='results')openModal('เปิดรายละเอียดไม่สำเร็จ',`<p role="alert">${esc(error.name==='AbortError'?'โหลดข้อมูลนานเกินไป กรุณาลองอีกครั้ง':error.message)}</p>`);}
+    finally{clearTimeout(timer);button.disabled=false;}
+ });
  function filteredAdminResults() {
     const f = state.adminResultFilters || {};
     const contains = (value,query) => String(value||'').toLocaleLowerCase().includes(String(query||'').trim().toLocaleLowerCase());
