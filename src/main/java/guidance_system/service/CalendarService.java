@@ -54,7 +54,7 @@ public class CalendarService {
         }
 
         // Published announcement events
-        LocalDate today = LocalDate.now();
+        LocalDate today = LocalDate.now(java.time.ZoneId.of("Asia/Bangkok"));
 
         List<Post> posts = postRepository.findAll();
 
@@ -106,6 +106,7 @@ public class CalendarService {
                 .filter(event -> keyword == null || keyword.isBlank()
                         || event.getEventTitle().toLowerCase()
                         .contains(keyword.trim().toLowerCase())
+                        || calendarTypeLabel(event.getEventType()).contains(keyword.trim())
                         || (event.getRound() != null
                         && event.getRound().toLowerCase()
                         .contains(keyword.trim().toLowerCase())))
@@ -115,6 +116,16 @@ public class CalendarService {
                 .sorted(Comparator.comparing(
                         CalendarEventResponse::getEventDate))
                 .toList();
+    }
+
+    private String calendarTypeLabel(String type) {
+        return switch(type == null ? "" : type) {
+            case "APPLICATION_OPEN" -> "เปิดรับสมัคร";
+            case "APPLICATION_CLOSE" -> "ปิดรับสมัคร";
+            case "RESULT_ANNOUNCEMENT" -> "ประกาศผล";
+            case "RIGHTS_CONFIRMATION" -> "ยืนยันสิทธิ์";
+            default -> type == null ? "" : type;
+        };
     }
 
     private void addEvent(
@@ -140,7 +151,7 @@ public class CalendarService {
 
     public List<CalendarEventResponse> getUpcomingEvents() {
 
-        LocalDate today = LocalDate.now();
+        LocalDate today = LocalDate.now(java.time.ZoneId.of("Asia/Bangkok"));
 
         return getCalendarEvents(null, null, null, null)
                 .stream()

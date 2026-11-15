@@ -453,6 +453,7 @@ const routes = {
     "method": "PUT",
     "path": "/api/schools/me"
   },
+  "TeacherApplicantSearchController.search": {"method":"GET","path":"/api/reports/applicant-search"},
   "SchoolStatisticsController.getStatistics": {
     "method": "GET",
     "path": "/api/reports/school-statistics"

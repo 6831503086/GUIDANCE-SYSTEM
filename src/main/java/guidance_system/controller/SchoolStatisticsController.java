@@ -34,10 +34,12 @@ import org.springframework.web.server.ResponseStatusException;
 public class SchoolStatisticsController {
 
     private final SchoolStatisticsService statisticsService;
+    private final guidance_system.service.SchoolStatisticsPdfService pdfService;
 
     public SchoolStatisticsController(
-            SchoolStatisticsService statisticsService) {
+            SchoolStatisticsService statisticsService, guidance_system.service.SchoolStatisticsPdfService pdfService) {
         this.statisticsService = statisticsService;
+        this.pdfService = pdfService;
     }
 
     @GetMapping
@@ -58,7 +60,7 @@ public class SchoolStatisticsController {
                         
                 );
 
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok().header("Cache-Control", "no-store").body(response);
     }
 
     @GetMapping("/export/pdf")
@@ -80,7 +82,7 @@ public class SchoolStatisticsController {
 
         byte[] pdf = generatePdf(report);
 
-        return ResponseEntity.ok()
+        return ResponseEntity.ok().header("Cache-Control", "no-store")
                 .header(
                         HttpHeaders.CONTENT_DISPOSITION,
                         "attachment; filename=school-statistics.pdf"
@@ -192,7 +194,7 @@ public class SchoolStatisticsController {
             workbook.write(outputStream);
             byte[] excelBytes = outputStream.toByteArray();
 
-            return ResponseEntity.ok()
+            return ResponseEntity.ok().header("Cache-Control", "no-store")
                     .header(
                             HttpHeaders.CONTENT_DISPOSITION,
                             "attachment; filename=school-applicants.xlsx"
@@ -219,170 +221,7 @@ public class SchoolStatisticsController {
         }
     }
 
-    private byte[] generatePdf(
-            SchoolStatisticsResponse report) throws IOException {
-
-        try (PDDocument document = new PDDocument();
-             ByteArrayOutputStream output = new ByteArrayOutputStream()) {
-
-            PDPage page = new PDPage(PDRectangle.A4);
-            document.addPage(page);
-
-            PDType1Font regular = new PDType1Font(
-                    Standard14Fonts.FontName.HELVETICA);
-
-            PDType1Font bold = new PDType1Font(
-                    Standard14Fonts.FontName.HELVETICA_BOLD);
-
-            try (PDPageContentStream content =
-                         new PDPageContentStream(document, page)) {
-
-                float y = 780;
-
-                y = drawLine(content, bold, 18,
-                        "SCHOOL STATISTICS REPORT", 50, y);
-
-                y = drawLine(content, regular, 11,
-                        "School: " + report.schoolName(), 50, y - 25);
-
-                y = drawLine(content, regular, 11,
-                        "Academic Year: " + report.academicYear(), 50, y);
-
-                y = drawLine(content, regular, 11,
-                        "Active Academic Year: "
-                                + report.activeAcademicYear(), 50, y);
-
-                y = drawLine(content, regular, 11,
-                        "Admission Round: "
-                                + valueOrNA(report.admissionRound()), 50, y);
-
-                y -= 15;
-
-                y = drawLine(content, bold, 14,
-                        "SUMMARY STATISTICS", 50, y);
-
-                SchoolStatisticsResponse.SummaryCards cards =
-                        report.summaryCards();
-
-                y = drawCard(content, regular, bold,
-                        "Total Applicants", cards.totalApplicants(), y);
-
-                y = drawCard(content, regular, bold,
-                        "Interview Eligible", cards.interviewEligible(), y);
-
-                y = drawCard(content, regular, bold,
-                        "Selected", cards.selected(), y);
-
-                y = drawCard(content, regular, bold,
-                        "Enrolled", cards.enrolled(), y);
-
-                y = drawCard(content, regular, bold,
-                        "Waived", cards.waived(), y);
-
-                y = drawCard(content, regular, bold,
-                        "Not Enrolled", cards.notEnrolled(), y);
-
-                y -= 15;
-
-                y = drawLine(content, bold, 14,
-                        "APPLICATION FUNNEL", 50, y);
-
-                for (SchoolStatisticsResponse.ChartItem item
-                        : report.applicationFunnel()) {
-
-                    y = drawLine(content, regular, 11,
-                            item.label() + ": " + item.count(),
-                            60, y);
-                }
-
-                y -= 15;
-
-                y = drawLine(content, bold, 14,
-                        "POST-SELECTION RESULTS", 50, y);
-
-                for (SchoolStatisticsResponse.ChartItem item
-                        : report.postSelectionResults()) {
-
-                    y = drawLine(content, regular, 11,
-                            item.label() + ": " + item.count(),
-                            60, y);
-                }
-
-                y -= 20;
-
-                drawLine(content, regular, 9,
-                        "Generated by Guidance Teacher System",
-                        50, y);
-            }
-
-            document.save(output);
-            return output.toByteArray();
-        }
-    }
-
-    private float drawCard(
-
-        
-            PDPageContentStream content,
-            PDType1Font regular,
-            PDType1Font bold,
-            String label,
-            SchoolStatisticsResponse.SummaryCard card,
-            float y) throws IOException {
-
-        if (card == null) {
-                return y;
-        }
-
-        y = drawLine(content, bold, 11,
-                label + ": " + card.count(),
-                60, y - 5);
-
-        y = drawLine(content, regular, 10,
-                "Proportion: "
-                        + String.format("%.2f%%", card.proportion()),
-                75, y);
-
-        String yoy = card.yoyChangePercent() == null
-                ? "N/A"
-                : String.format("%.2f%%", card.yoyChangePercent());
-
-        y = drawLine(content, regular, 10,
-                "Previous Year: "
-                        + card.previousYearCount()
-                        + " | YoY Change: " + yoy,
-                75, y);
-
-        return y - 5;
-    }
-
-    private float drawLine(
-            PDPageContentStream content,
-            PDType1Font font,
-            float fontSize,
-            String text,
-            float x,
-            float y) throws IOException {
-
-        content.beginText();
-        content.setFont(font, fontSize);
-        content.newLineAtOffset(x, y);
-        content.showText(toPdfText(text));
-        content.endText();
-
-        return y - fontSize - 5;
-    }
-
-    private String toPdfText(String text) {
-        if (text == null) {
-            return "";
-        }
-
-        return text.replaceAll("[^\\x20-\\x7E]", "?");
-    }
-
-    private String valueOrNA(String value) {
-        return value == null || value.isBlank()
-                ? "N/A" : value;
+    private byte[] generatePdf(SchoolStatisticsResponse report) throws IOException {
+        return pdfService.generatePdf(report);
     }
 }

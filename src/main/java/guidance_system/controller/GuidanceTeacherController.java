@@ -260,33 +260,15 @@ public class GuidanceTeacherController {
         }
     }
 
+    @org.springframework.beans.factory.annotation.Autowired
+    private guidance_system.service.SelfAccountDeletionService selfAccountDeletion;
+    public record DeleteOwnAccountRequest(Boolean deletionConsent) {}
     @DeleteMapping("/me")
     @PreAuthorize("hasRole('TEACHER')")
-    public ResponseEntity<?> deleteMyAccount(
-            Authentication authentication) {
-
-        GuidanceTeacher teacher = repository
-                .findByEmail(authentication.getName())
-                .orElse(null);
-
-        if (teacher == null) {
-            return ResponseEntity.notFound().build();
-        }
-
-        Long teacherId = teacher.getTeacherId();
-
-        try {
-            service.deleteTeacherAccount(teacherId);
-
-            return ResponseEntity.ok(
-                    Map.of(
-                            "message", "Your account has been deleted successfully.",
-                            "teacherId", teacherId
-                    ));
-
-        } catch (IllegalArgumentException exception) {
-            return ResponseEntity.notFound().build();
-        }
+    public ResponseEntity<?> deleteMyAccount(@RequestBody DeleteOwnAccountRequest request,
+            Authentication authentication) throws IOException {
+        Long teacherId=selfAccountDeletion.deleteOwnAccount(authentication.getName(),request==null?null:request.deletionConsent());
+        return ResponseEntity.ok().header("Cache-Control","no-store").body(Map.of("message","Account permanently deleted.","teacherId",teacherId));
     }
 
     @PutMapping("/{id}")

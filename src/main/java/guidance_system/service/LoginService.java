@@ -43,6 +43,10 @@ public class LoginService {
                 );
             }
 
+            if (!Boolean.TRUE.equals(teacher.getPdpaConsent())) {
+                throw new IllegalArgumentException("Please complete password setup and PDPA consent before logging in.");
+            }
+
             if (passwordEncoder.matches(
                     password, teacher.getPasswordHash())) {
 

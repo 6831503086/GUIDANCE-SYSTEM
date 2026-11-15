@@ -24,14 +24,17 @@ public class EmailVerificationController {
             @RequestHeader(value = HttpHeaders.ACCEPT, defaultValue = "") String accept) {
 
         boolean verified;
+        String setupToken = null;
         boolean emailChanged = "change_email".equals(type);
 
         if (emailChanged) {
             verified = service.verifyEmailChange(token);
         } else if ("verify_email".equals(type)) {
-            verified = service.verifyTeacherEmail(token);
+            setupToken = service.verifyRegistrationEmail(token);
+            verified = setupToken != null;
         } else {
-            verified = service.verifyTeacherEmail(token);
+            setupToken = service.verifyRegistrationEmail(token);
+            verified = setupToken != null;
             if (!verified) {
                 verified = service.verifyEmailChange(token);
                 emailChanged = verified;
@@ -39,7 +42,7 @@ public class EmailVerificationController {
         }
 
         boolean browser = accept.contains(MediaType.TEXT_HTML_VALUE);
-        String body = browser ? page(verified, emailChanged)
+        String body = browser ? page(verified, emailChanged, setupToken)
                 : verified ? "Email verified successfully."
                 : "Invalid, expired, or already used token.";
 
@@ -52,12 +55,14 @@ public class EmailVerificationController {
                 .body(body);
     }
 
-    private String page(boolean verified, boolean emailChanged) {
+    private String page(boolean verified, boolean emailChanged, String setupToken) {
         String title = verified ? "ยืนยันอีเมลเรียบร้อย" : "ไม่สามารถยืนยันอีเมลได้";
         String message = verified
                 ? emailChanged
                     ? "เปลี่ยนอีเมลเรียบร้อยแล้ว<br>กรุณาเข้าสู่ระบบด้วยอีเมลใหม่ของท่าน"
-                    : "การสมัครสมาชิกเสร็จสมบูรณ์เรียบร้อยแล้ว<br>กรุณาเข้าสู่ระบบด้วยบัญชีผู้ใช้ที่ลงทะเบียนเพื่อเริ่มงาน"
+                    : setupToken != null && !setupToken.isEmpty()
+                        ? "ยืนยันอีเมลสำเร็จแล้ว<br>ขั้นตอนถัดไป: ตั้งรหัสผ่านและยอมรับเงื่อนไขเพื่อเปิดใช้งานบัญชี"
+                        : "ยืนยันอีเมลเรียบร้อยแล้ว<br>กรุณาเข้าสู่ระบบด้วยบัญชีผู้ใช้ที่ลงทะเบียน"
                 : "ลิงก์อาจหมดอายุหรือถูกใช้งานแล้ว<br>หากยืนยันอีเมลสำเร็จก่อนหน้านี้ สามารถเข้าสู่ระบบได้";
         String status = verified
                 ? "<div class=\"reference-account-status\"><span>สถานะบัญชี</span><strong>ยืนยันอีเมลแล้ว</strong></div>"
@@ -66,6 +71,9 @@ public class EmailVerificationController {
                 ? "<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" aria-hidden=\"true\"><path d=\"M20 11a8 8 0 1 1-4-6\"/><path d=\"m8 11 4 4 8-10\"/></svg>"
                 : "<span aria-hidden=\"true\">!</span>";
 
+        String action = setupToken != null && !setupToken.isEmpty()
+                ? "<a href=\"/#registration-setup=" + setupToken + "\" class=\"btn btn-primary reference-submit\">ตั้งรหัสผ่านและเปิดใช้งานบัญชี</a>"
+                : "<a href=\"/\" class=\"btn btn-primary reference-submit\">เข้าสู่ระบบ</a>";
         return """
                 <!doctype html>
                 <html lang="th">
@@ -92,7 +100,7 @@ public class EmailVerificationController {
                             <p class="reference-message">%s</p>
                             <div class="reference-rule"></div>
                             %s
-                            <a href="/" class="btn btn-primary reference-submit">เข้าสู่ระบบ</a>
+                            %s
                             <p class="reference-support">กรณีไม่สามารถเข้าใช้งานระบบได้ กรุณาติดต่อฝ่ายรับนักศึกษา ส่วนทะเบียนและประมวลผล<br>
                                 <a href="tel:053916103">โทร. 0 5391 6103</a>
                             </p>
@@ -100,6 +108,6 @@ public class EmailVerificationController {
                     </main>
                 </body>
                 </html>
-                """.formatted(title, icon, title, message, status);
+                """.formatted(title, icon, title, message, status, action);
     }
 }

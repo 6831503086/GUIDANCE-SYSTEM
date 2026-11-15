@@ -10,6 +10,7 @@ public interface VerificationTokenRepository extends JpaRepository<VerificationT
 
     Optional<VerificationToken> findByToken(String token);
 
+    @org.springframework.data.jpa.repository.Lock(jakarta.persistence.LockModeType.PESSIMISTIC_WRITE)
     Optional<VerificationToken> findByTokenAndTokenType(
             String token, String tokenType);
 

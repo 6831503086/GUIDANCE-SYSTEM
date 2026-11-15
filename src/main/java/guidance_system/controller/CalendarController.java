@@ -80,12 +80,24 @@ public class CalendarController {
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) Integer academicYear,
             @RequestParam(required = false) String round,
-            @RequestParam(required = false) LocalDate date)
+            @RequestParam(required = false) LocalDate date,
+            @RequestParam(required = false) Integer year,
+            @RequestParam(required = false) Integer month)
             throws IOException {
 
         List<CalendarEventResponse> events =
                 service.getCalendarEvents(keyword, academicYear, round, date);
 
+        if ((year == null) != (month == null) || (month != null && (month < 1 || month > 12))
+                || (year != null && (year < 1900 || year > 9999))) {
+            throw new org.springframework.web.server.ResponseStatusException(
+                    org.springframework.http.HttpStatus.BAD_REQUEST, "Provide a valid calendar year and month.");
+        }
+        if (year != null) {
+            LocalDate first=LocalDate.of(year,month,1),last=first.withDayOfMonth(first.lengthOfMonth());
+            events=events.stream().filter(e->!e.getEventStartDate().isAfter(last)
+                    && !e.getEventEndDate().isBefore(first)).toList();
+        }
         byte[] pdf = pdfService.generatePdf(events);
 
         return ResponseEntity.ok()

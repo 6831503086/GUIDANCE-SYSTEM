@@ -25,6 +25,7 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Service
+@org.springframework.transaction.annotation.Transactional(readOnly=true)
 public class AdminDashboardService {
 
     private final PostRepository postRepository;
@@ -52,13 +53,16 @@ public class AdminDashboardService {
             String status,
             Integer days) {
 
-        int periodDays = (days == null || days <= 0) ? 30 : days;
+        if(academicYear!=null&&(academicYear<2400||academicYear>3000))throw new IllegalArgumentException("Invalid academic year.");
+        if(days!=null&&!List.of(7,30,90,365).contains(days))throw new IllegalArgumentException("Unsupported time period.");
+        int periodDays = days == null ? 30 : days;
 
         LocalDateTime periodEnd = LocalDateTime.now();
         LocalDateTime periodStart = periodEnd.minusDays(periodDays);
         LocalDate today = LocalDate.now();
 
-        String normalizedStatus = clean(status);
+        String cleanedStatus = clean(status);
+        final String normalizedStatus = cleanedStatus==null?null:cleanedStatus.toUpperCase(java.util.Locale.ROOT);
 
         if (normalizedStatus != null) {
         List<String> allowedStatuses = List.of(
@@ -230,9 +234,7 @@ public class AdminDashboardService {
                                 dataset.getProgram().getEntryGroup()
                                         .getAcademicYear(),
                                 academicYear)))
-                .filter(dataset -> normalizedStatus == null
-                        || normalizedStatus.equalsIgnoreCase(
-                                dataset.getDatasetStatus()))
+                .filter(dataset -> matchesDatasetStatus(dataset, normalizedStatus))
                 .toList();
 
         long totalDatasets = datasets.size();
@@ -276,7 +278,7 @@ public class AdminDashboardService {
                         new AdminDashboardResponse.PendingTaskItem(
                                 "DRAFT_ANNOUNCEMENT",
                                 post.getPostId(),
-                                post.getTitle(),
+                                post.getTitle()==null?"ประกาศ #"+post.getPostId():post.getTitle(),
                                 "DRAFT",
                                 "Announcement is waiting to be published."
                         )
@@ -352,63 +354,28 @@ public class AdminDashboardService {
         );
     }
 
-    private boolean matchesPostStatus(Post post, String status) {
-
-        if (status == null) {
-            return true;
-        }
-
-        if ("UNPUBLISHED".equalsIgnoreCase(status)) {
-            return post.getPublishedAt() == null;
-        }
-
-        if ("DRAFT".equalsIgnoreCase(status)) {
-            return post.getPublishedAt() == null;
-        }
-
-        if ("PUBLISHED".equalsIgnoreCase(status)) {
-            return post.getPublishedAt() != null;
-        }
-
-        if ("HIDDEN".equalsIgnoreCase(status)) {
-            return Boolean.TRUE.equals(post.getIsHidden());
-        }
-
-        if ("EXPIRED".equalsIgnoreCase(status)) {
-            return post.getVisibleEndDate() != null
-                    && post.getVisibleEndDate().isBefore(LocalDate.now());
-        }
-
-        return true;
+    private boolean matchesPostStatus(Post post,String status) {
+        if(status==null)return true;
+        return switch(status){
+            case "UNPUBLISHED","DRAFT" -> post.getPublishedAt()==null;
+            case "PUBLISHED" -> post.getPublishedAt()!=null;
+            case "HIDDEN" -> Boolean.TRUE.equals(post.getIsHidden());
+            case "EXPIRED" -> post.getVisibleEndDate()!=null&&post.getVisibleEndDate().isBefore(LocalDate.now());
+            case "NEWS","ANNOUNCEMENT" -> status.equalsIgnoreCase(post.getPostType());
+            default -> false;
+        };
     }
-
-
-    private boolean matchesSelectionStatus(
-        ApplicantSelection selection,
-        String status) {
-
-    if (status == null) {
-        return true;
+    private boolean matchesSelectionStatus(ApplicantSelection selection,String status) {
+        if(status==null)return true;
+        if("PUBLISHED".equals(status))return selection.getPublishedAt()!=null;
+        if("UNPUBLISHED".equals(status))return selection.getPublishedAt()==null;
+        return selection.getStatus()!=null&&(status.equalsIgnoreCase(selection.getStatus().getStatusCode())||status.equalsIgnoreCase(selection.getStatus().getDescription()));
     }
-
-    if ("PUBLISHED".equalsIgnoreCase(status)) {
-        return selection.getPublishedAt() != null;
+    private boolean matchesDatasetStatus(ResultDataset dataset,String status){
+        if(status==null)return true;
+        if("UNPUBLISHED".equals(status))return !"PUBLISHED".equalsIgnoreCase(dataset.getDatasetStatus());
+        return status.equalsIgnoreCase(dataset.getDatasetStatus());
     }
-
-    if ("UNPUBLISHED".equalsIgnoreCase(status)) {
-        return selection.getPublishedAt() == null;
-    }
-
-    if (selection.getStatus() == null) {
-        return false;
-    }
-
-    return status.equalsIgnoreCase(
-            selection.getStatus().getStatusCode())
-            || status.equalsIgnoreCase(
-                    selection.getStatus().getDescription());
-}
-
 
     private String clean(String value) {
         if (value == null || value.isBlank()) {

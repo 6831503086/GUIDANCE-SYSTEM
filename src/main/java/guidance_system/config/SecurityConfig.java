@@ -100,8 +100,10 @@ public class SecurityConfig {
 
             String role = jwt.getClaimAsString("role");
 
-            if ("TEACHER".equals(role)
-                     && !teacherRepository.existsByEmail(jwt.getSubject())) {
+            Object teacherId=jwt.getClaims().get("teacherId");
+            boolean validTeacher=!"TEACHER".equals(role)||(teacherId instanceof Number id
+                && teacherRepository.findByEmail(jwt.getSubject()).map(t->t.getTeacherId().equals(id.longValue())).orElse(false));
+            if (!validTeacher) {
 
                 return OAuth2TokenValidatorResult.failure(
                         new OAuth2Error(

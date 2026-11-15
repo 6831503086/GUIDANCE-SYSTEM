@@ -15,7 +15,11 @@ import java.time.LocalDateTime;
 import java.util.Optional;
 
 @Service
+@org.springframework.transaction.annotation.Transactional
 public class PostService {
+
+    @jakarta.persistence.PersistenceContext
+    private jakarta.persistence.EntityManager entityManager;
 
     private final PostRepository repository;
     private final AdminRepository adminRepository;
@@ -50,6 +54,7 @@ public class PostService {
     public Post createDraft(Post post) {
         validateDates(post);
         validatePostType(post.getPostType());
+        applyLocation(post,post);
 
         post.setAdmin(getCurrentAdmin());
         post.setPublishedAt(null);
@@ -147,6 +152,20 @@ public class PostService {
 
             return savedPost;
         });
+    }
+
+    private void applyLocation(Post target,Post input) {
+        String venue=input.getBuildingName()==null?null:input.getBuildingName().trim();
+        if(venue!=null&&venue.length()>150)throw new IllegalArgumentException("Building name must not exceed 150 characters.");
+        guidance_system.entity.Subdistrict location=null;
+        if(input.getSubdistrict()!=null){
+            Long id=input.getSubdistrict().getSubdistrictId();
+            if(id==null)throw new IllegalArgumentException("A valid subdistrict ID is required.");
+            location=entityManager.find(guidance_system.entity.Subdistrict.class,id);
+            if(location==null)throw new IllegalArgumentException("Subdistrict not found.");
+        }
+        target.setBuildingName(venue==null||venue.isBlank()?null:venue);
+        target.setSubdistrict(location);
     }
 
     private void validatePostType(String postType) {
@@ -247,6 +266,7 @@ public class PostService {
             post.setVisibleStartDate(details.getVisibleStartDate());
             post.setVisibleEndDate(details.getVisibleEndDate());
             post.setPostType(details.getPostType());
+            applyLocation(post,details);
 
             // Restore automatically hidden posts if their end date is extended
             if (wasAutoHidden
