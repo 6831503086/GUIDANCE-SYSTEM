@@ -8,6 +8,9 @@ ation uses HTML, CSS, and JavaScript for the frontend, Java 21 with
 the backend, and an embedded H2 database, with JWT authentication and ro
 access control to protect school-specific information.
 
+# LIVE DEMO
+https://guidance-system-801537313339.us-central1.run.app
+
 ## GROUP MEMBERS
     6831503086  Naung Yoe Tun (Backend,Frontend,Database)
     6831503109  Ananya Suwandee  (Database)
