@@ -99,6 +99,11 @@ In GitHub Codespaces, open the forwarded address for port 8080 from the Ports ta
 
 ### 6. Test Accounts
 
+admin_account : guidancesystem.admin@gmail.com
+password : ChangeMe123!
+
+guidance_teacher : 
+password : 
 
 ### 7. Run Automated Tests
 
