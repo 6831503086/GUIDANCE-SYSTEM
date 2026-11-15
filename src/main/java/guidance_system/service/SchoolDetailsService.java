@@ -37,6 +37,24 @@ public class SchoolDetailsService {
     public record Logo(byte[] bytes,String mime) {}
     @Transactional(readOnly=true)
     public SchoolView get(String email){School s=ownSchool(email,false);return view(s,details.findById(s.getSchoolId()).orElse(null));}
+    @Transactional(readOnly=true)
+    @org.springframework.security.access.prepost.PreAuthorize("hasRole('ADMIN')")
+    public SchoolView getForAdmin(Long schoolId) {
+        School school=schoolForAdmin(schoolId);
+        return view(school,details.findById(school.getSchoolId()).orElse(null));
+    }
+    @Transactional(readOnly=true)
+    @org.springframework.security.access.prepost.PreAuthorize("hasRole('ADMIN')")
+    public Logo logoForAdmin(Long schoolId) {
+        School school=schoolForAdmin(schoolId);
+        SchoolDetails saved=details.findById(school.getSchoolId()).orElse(null);
+        return saved==null||saved.getLogoBytes()==null?null:new Logo(saved.getLogoBytes(),saved.getLogoMime());
+    }
+    private School schoolForAdmin(Long schoolId) {
+        if(schoolId==null||schoolId<=0)throw bad("Invalid school ID.");
+        return schools.findById(schoolId).orElseThrow(()->new org.springframework.web.server.ResponseStatusException(
+                org.springframework.http.HttpStatus.NOT_FOUND,"School not found."));
+    }
     public SchoolView saveGeneral(String email,GeneralRequest request){
         School s=ownSchool(email,true);
         String name=required(request.name(),200,"School name"),type=optional(request.schoolType(),50,"School type");

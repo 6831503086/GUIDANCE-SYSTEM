@@ -476,7 +476,7 @@ try {
   'btn-outline',
   'aria-label="แสดงหรือซ่อนรหัสผ่าน"'
 )}</div>`:''}${view==='password'?`<div class="full">${field('ยืนยันรหัสผ่าน','confirm','','password',true,'minlength="8"')}</div><label class="check full"><input type="checkbox" required> ยอมรับเงื่อนไขและยินยอมตามนโยบาย PDPA</label>`:''}<button class="btn btn-primary full">${view==='login'?'เข้าสู่ระบบ':view==='register'?'ยื่นคำขอลงทะเบียน':view==='password'?'ยืนยันและยื่นคำขอ':'ยืนยันคำขอตัวอย่าง'}</button></form><div class="auth-links">${view==='login'?btn('ลืมรหัสผ่าน?','auth-reset'):btn('กลับเข้าสู่ระบบ','auth-login')}</div>`}<p class="auth-help">หากต้องการความช่วยเหลือ ติดต่อส่วนรับนักศึกษา<br>โทร. 0 5391 6103</p></section><footer>© 2026 Mae Fah Luang University. All rights reserved.<br>ส่วนรับนักศึกษา มหาวิทยาลัยแม่ฟ้าหลวง พัฒนาเพื่อการประสานงานโรงเรียนเครือข่ายครูแนะแนว</footer>`;if(view==='login'){const link=get('authRoot').querySelector('[data-ui="auth-reset"]');const label=get('authRoot').querySelector('.password-field label');if(link&&label){label.appendChild(link);link.classList.add('forgot-link');}get('authRoot').querySelector('.auth-links')?.remove();if(role==='teacher'){const line=document.createElement('div');line.className='auth-links';line.innerHTML='<span>ยังไม่มีบัญชี? </span>'+btn('คลิกเพื่อลงทะเบียนครูแนะแนว','auth-register','text-button');get('authForm').after(line);}get('authForm').elements.email.placeholder='example@yourdomain.com';get('authForm').elements.password.placeholder='กรอกรหัสผ่านเพื่อเข้าใช้งาน';}}
- function modal(title,body,actions=''){get('uiDialog').classList.remove('account-dialog','admin-school-drawer');if(state.role==='admin'&&title.includes('โรงเรียน'))get('uiDialog').classList.add('admin-school-drawer');get('uiDialog').innerHTML=`<div class="dialog-head"><h2>${title}</h2>${btn('×','close')}</div>${body}<div class="form-actions">${actions||btn('ปิด','close')}</div>`;get('uiDialog').showModal();}
+ function modal(title,body,actions=''){get('uiDialog').classList.remove('account-dialog','admin-school-drawer','school-info-dialog');if(state.role==='admin'&&title.includes('โรงเรียน'))get('uiDialog').classList.add('admin-school-drawer');get('uiDialog').innerHTML=`<div class="dialog-head"><h2>${title}</h2>${btn('×','close')}</div>${body}<div class="form-actions">${actions||btn('ปิด','close')}</div>`;get('uiDialog').showModal();}
  let returnFocus;const openModal=(...args)=>{returnFocus=document.activeElement;modal(...args);};
  function download(filename,headers,rows){const encode=v=>'"'+String(v??'').replace(/"/g,'""').replace(/^[=+@\-]/,"'$&")+'"';const csv='\ufeff'+[headers,...rows].map(r=>r.map(encode).join(',')).join('\r\n');const url=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));const a=document.createElement('a');a.href=url;a.download=filename;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}
  let month = new Date();
@@ -2708,6 +2708,8 @@ ${field(
         if (!validSchoolOverview(report)) throw new Error('รูปแบบข้อมูลโรงเรียนจาก Backend ไม่ถูกต้อง');
         state.adminSchoolReport = report;
         if (results[1].status === 'fulfilled' && Array.isArray(results[1].value)) {
+            state.adminSchoolRecords = results[1].value;
+            state.adminSchoolRecordsGeneration = generation;
             state.adminSchoolProvinces = [...new Set(results[1].value.map(s => s.subdistrict?.district?.province?.name).filter(Boolean))].sort();
         } else {
             state.adminSchoolProvinces = [...new Set([...(state.adminSchoolProvinces||[]), ...report.schools.map(s => s.province).filter(Boolean)])].sort();
@@ -2725,18 +2727,132 @@ ${field(
  function schoolAccountLabel(s) {
     return s.teacherCount === 0 ? 'ไม่มีบัญชี' : s.status === 'Active' ? 'ยืนยันอีเมลและยินยอมแล้ว' : 'รอยืนยันอีเมลหรือความยินยอม';
  }
- function showAdminSchoolDetail(id) {
-    const s = state.adminSchoolReport?.schools.find(s => s.schoolId === id);
-    if (!s) return;
-    openModal(esc(s.schoolName), `<dl>
-        <dt>รหัสโรงเรียน</dt><dd>${esc(s.schoolCode || '—')}</dd>
-        <dt>จังหวัด</dt><dd>${esc(s.province || 'ไม่ระบุจังหวัด')}</dd>
-        <dt>ภูมิภาค</dt><dd>${esc(s.region || '—')}</dd>
-        <dt>ประเภทโรงเรียน</dt><dd>${esc(s.schoolType || '—')}</dd>
-        <dt>บัญชีครูแนะแนว</dt><dd>${esc(schoolAccountLabel(s))}</dd>
-        <dt>จำนวนครูแนะแนว</dt><dd>${s.teacherCount}</dd>
-        <dt>จำนวนผู้สมัคร (ทุกปีการศึกษา)</dt><dd>${s.applicantCount}</dd>
-    </dl>`);
+ function schoolDetailContent(summary, school = {}) {
+    const subdistrict = school.subdistrict || summary.subdistrict || {};
+    const district = subdistrict.district || {};
+    const province = district.province || {};
+    const details = school.schoolDetails || school.details || school;
+    const principal = details.principal || {};
+    const value = input => input === undefined || input === null || String(input).trim() === '' ? '—' : input;
+    const row = (label, input, wide = false) => `<div class="school-info-field${wide ? ' school-info-wide' : ''}"><dt>${esc(label)}</dt><dd>${esc(value(input))}</dd></div>`;
+    const loaded = school.detailLoadState === 'loaded';
+    const region = loaded ? province.region : province.region || summary.region;
+    const fields = [
+        row('รหัสโรงเรียน', loaded ? school.schoolCode : school.schoolCode || summary.schoolCode),
+        row('ประเภทโรงเรียน', loaded ? school.schoolType : school.schoolType || summary.schoolType),
+        row('จังหวัด', loaded ? province.name : province.name || summary.province),
+        row('อำเภอ / เขต', district.name),
+        row('ตำบล / แขวง', subdistrict.name),
+        row('รหัสไปรษณีย์', subdistrict.zipcode || subdistrict.zipCode)
+    ];
+    if (region) fields.push(row('ภูมิภาค', region));
+    const contact = loaded && (details.email || details.phone)
+        ? [row('อีเมลโรงเรียน', details.email), row('โทรศัพท์โรงเรียน', details.phone)] : [];
+    const principalName = [principal.prefix?.prefixName || principal.prefixName, principal.firstName, principal.lastName].filter(Boolean).join(' ');
+    const director = loaded && (principalName || principal.position || principal.education || principal.license || principal.email) ? [
+        row('ผู้อำนวยการสถานศึกษา', principalName, true),
+        row('ตำแหน่ง', principal.position),
+        row('วุฒิการศึกษาสูงสุด', principal.education),
+        row('เลขที่ใบอนุญาตประกอบวิชาชีพ', principal.license),
+        row('อีเมลผู้อำนวยการ', principal.email)
+    ] : [];
+    return `<style>
+        #uiDialog.school-info-dialog{box-sizing:border-box;width:680px;max-width:calc(100vw - 32px);max-height:calc(100dvh - 32px);margin:auto;padding:24px;border:1px solid #E3DDD6;border-radius:16px;background:#FFFFFF;color:#1C1C1E;overflow:auto;}
+        #uiDialog.school-info-dialog .dialog-head{position:sticky;top:0;z-index:1;background:#FFFFFF;display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin:0 0 20px;padding:0 0 16px;border-bottom:1px solid #E3DDD6;}
+        #uiDialog.school-info-dialog .dialog-head h2{display:flex;align-items:center;gap:12px;min-width:0;margin:0;padding:2px 0;font:inherit;font-size:20px;font-weight:700;line-height:1.5;overflow-wrap:anywhere;}
+        #uiDialog.school-info-dialog .dialog-head [data-ui="close"]{display:inline-flex;align-items:center;justify-content:center;flex:0 0 32px;width:32px;min-width:32px;height:32px;min-height:32px;margin:0;padding:0;border:0;border-radius:8px;background:transparent;color:#636366;font:inherit;font-size:24px;line-height:1;cursor:pointer;box-shadow:none;}
+        #uiDialog.school-info-dialog .dialog-head [data-ui="close"]:hover{background:#F4F4F5;color:#7A2222;}
+        #uiDialog.school-info-dialog .dialog-head [data-ui="close"]:focus-visible{outline:2px solid #7A2222;outline-offset:2px;}
+        #uiDialog.school-info-dialog>.form-actions{display:none;}
+        #uiDialog.school-info-dialog .school-info-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px 28px;margin:0;padding:0;}
+        #uiDialog.school-info-dialog .school-info-field{min-width:0;margin:0;padding:0;}
+        #uiDialog.school-info-dialog .school-info-field dt{margin:0 0 4px;padding:0;color:#636366;font-size:13px;font-weight:400;line-height:1.5;}
+        #uiDialog.school-info-dialog .school-info-field dd{margin:0;padding:0;color:#1C1C1E;font-size:15px;font-weight:500;line-height:1.6;overflow-wrap:anywhere;}
+        #uiDialog.school-info-dialog .school-info-wide{grid-column:1/-1;}
+        #uiDialog.school-info-dialog .school-info-section{margin:20px 0 0;padding:18px 0 0;border-top:1px solid #E3DDD6;}
+        #uiDialog.school-info-dialog .school-info-section h3{margin:0 0 14px;font:inherit;font-size:14px;font-weight:600;}
+        @media(max-width:480px){#uiDialog.school-info-dialog{padding:20px;}#uiDialog.school-info-dialog .school-info-grid{grid-template-columns:minmax(0,1fr);gap:14px;}#uiDialog.school-info-dialog .dialog-head h2{font-size:18px;}}
+        #uiDialog.school-info-dialog .school-info-logo{flex:0 0 44px;width:44px;height:44px;object-fit:contain;}
+        #uiDialog.school-info-dialog .school-info-status{margin:0 0 16px;color:#636366;font-size:13px;}
+    </style>
+    <div class="school-info-content">
+    ${school.detailLoadState === 'loading' ? '<p class="school-info-status" role="status">กำลังโหลดข้อมูลเพิ่มเติม…</p>' : school.detailLoadState === 'failed' ? '<p class="school-info-status" role="alert">โหลดข้อมูลติดต่อและผู้อำนวยการไม่สำเร็จ กรุณาปิดแล้วเปิดรายละเอียดอีกครั้ง</p>' : ''}
+    <dl class="school-info-grid">${fields.join('')}</dl>
+    ${contact.length ? `<section class="school-info-section"><h3>ข้อมูลติดต่อโรงเรียน</h3><dl class="school-info-grid">${contact.join('')}</dl></section>` : ''}
+    ${director.length ? `<section class="school-info-section"><h3>ผู้อำนวยการสถานศึกษา</h3><dl class="school-info-grid">${director.join('')}</dl></section>` : ''}
+    ${loaded && !contact.length && !director.length ? '<section class="school-info-section"><h3>ข้อมูลติดต่อโรงเรียนและผู้อำนวยการสถานศึกษา</h3><p class="school-info-status">ยังไม่มีข้อมูลที่บันทึกไว้</p></section>' : ''}
+    <section class="school-info-section"><h3>ข้อมูลในระบบ</h3><dl class="school-info-grid">
+        ${row('บัญชีครูแนะแนว', schoolAccountLabel(summary), true)}
+        ${row('จำนวนครูแนะแนว', summary.teacherCount)}
+        ${row('ผู้สมัคร (ทุกปีการศึกษา)', summary.applicantCount)}
+    </dl></section></div>`;
+ }
+ let adminSchoolDetailRequest = 0;
+ let releaseAdminSchoolLogo = null;
+ async function showAdminSchoolDetail(id) {
+    if (state.role !== 'admin') return;
+    const summary = state.adminSchoolReport?.schools.find(s => s.schoolId === id);
+    if (!summary) return;
+    const request = ++adminSchoolDetailRequest, generation = loginGeneration;
+    if (releaseAdminSchoolLogo) releaseAdminSchoolLogo();
+    const cached = state.adminSchoolRecordsGeneration === generation
+        ? state.adminSchoolRecords?.find(s => s.schoolId === id) || {}
+        : {};
+    openModal(esc(summary.schoolName), schoolDetailContent(summary, {...cached, detailLoadState:'loading'}), ' ');
+    const dialog = get('uiDialog');
+    dialog.classList.remove('admin-school-drawer');
+    dialog.classList.add('school-info-dialog');
+    dialog.dataset.schoolDetailId = String(id);
+    const close = dialog.querySelector('.dialog-head [data-ui="close"]');
+    if (close) {
+        close.type = 'button';
+        close.setAttribute('aria-label', 'ปิดรายละเอียดโรงเรียน');
+        close.setAttribute('title', 'ปิด');
+    }
+    const current = () => request === adminSchoolDetailRequest && generation === loginGeneration &&
+        state.role === 'admin' && dialog.open && dialog.classList.contains('school-info-dialog') &&
+        dialog.dataset.schoolDetailId === String(id);
+    const update = school => {
+        if (!current()) return;
+        const template = document.createElement('template');
+        template.innerHTML = schoolDetailContent(summary, school);
+        dialog.querySelector('.school-info-content')?.replaceWith(template.content.querySelector('.school-info-content'));
+    };
+    let logoUrl = null;
+    const release = () => {if (logoUrl) {URL.revokeObjectURL(logoUrl); logoUrl = null;}};
+    releaseAdminSchoolLogo = release;
+    dialog.addEventListener('close', release, {once:true});
+    try {
+        const response = await window.MfuApi.request('AdminSchoolDetailController.get', {params:{schoolId:id}});
+        if (!current()) return;
+        const school = response?.school;
+        if (!school || school.schoolId !== id || typeof school.name !== 'string') {
+            throw new Error('รูปแบบข้อมูลรายละเอียดโรงเรียนไม่ถูกต้อง');
+        }
+        const record = {...school, detailLoadState:'loaded',
+            principal:{...school.principal, prefixName:response.principalPrefixName}};
+        update(record);
+        const title = dialog.querySelector('.dialog-head h2');
+        if (title) title.textContent = school.name;
+        if (school.hasLogo) {
+            try {
+                const blob = await window.MfuApi.request('AdminSchoolDetailController.logo',
+                    {params:{schoolId:id}, responseType:'blob'});
+                if (!current()) return;
+                logoUrl = URL.createObjectURL(blob);
+                const image = document.createElement('img');
+                image.className = 'school-info-logo';
+                image.alt = 'ตราโรงเรียน ' + school.name;
+                image.src = logoUrl;
+                image.addEventListener('error', () => {image.remove(); release();}, {once:true});
+                dialog.querySelector('.dialog-head h2')?.prepend(image);
+            } catch (error) {
+                // A missing logo must not hide the rest of the school's saved details.
+            }
+        }
+    } catch (error) {
+        if (current()) update({...cached, detailLoadState:'failed'});
+    }
  }
  function adminSchoolsPage() {
     const report = state.adminSchoolReport;
@@ -2804,15 +2920,7 @@ ${field(
         <option value="NEWS" ${p.postType?.toUpperCase() === 'NEWS' ? 'selected' : ''}>ข่าวสาร</option>
         <option value="ANNOUNCEMENT" ${p.postType?.toUpperCase() === 'ANNOUNCEMENT' ? 'selected' : ''}>ประกาศ</option>
     </select>
-</label>${select('สถานะการแสดงผล','isHidden',[p.isHidden?'ซ่อน':'แสดงบนเว็บไซต์',p.isHidden?'แสดงบนเว็บไซต์':'ซ่อน'])}<div class="full">${field('ชื่อเรื่อง','title',p.title,'text',true,'maxlength="255" placeholder="กรอกชื่อเรื่อง"')}</div><label class="full">เนื้อหา<textarea name="content" rows="5" required placeholder="รายละเอียดข่าวหรือประชาสัมพันธ์">${esc(p.content||'')}</textarea></label><div class="full">
-    ${field(
-        'กลุ่มเป้าหมาย',
-        'targetAudience',
-        p.targetAudience ?? 'ครูแนะแนว',
-        'text',
-        true
-    )}
-</div>
+</label>${select('สถานะการแสดงผล','isHidden',[p.isHidden?'ซ่อน':'แสดงบนเว็บไซต์',p.isHidden?'แสดงบนเว็บไซต์':'ซ่อน'])}<div class="full">${field('ชื่อเรื่อง','title',p.title,'text',true,'maxlength="255" placeholder="กรอกชื่อเรื่อง"')}</div><label class="full">เนื้อหา<textarea name="content" rows="5" required placeholder="รายละเอียดข่าวหรือประชาสัมพันธ์">${esc(p.content||'')}</textarea></label>
 <div class="full">
     ${field(
         'กลุ่มเป้าหมาย',
