@@ -5,7 +5,7 @@ steps:
 
   # Step 2: เอา image เก็บเข้าตู้ Artifact Registry
   - name: 'gcr.io/cloud-builders/docker'
-    args: ['push', 'us-central1-docker.pkg.dev/$_PROJECT_ID/webdev-dockers/guidance-system:$COMMIT_SHA']
+    args: ['push', 'us-central1-docker.pkg.dev/guidance-teacher-system-514816/webdev-dockers/guidance-system:$COMMIT_SHA']
 
   # Step 3: ส่งไปรันที่ Cloud Run
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
@@ -14,17 +14,17 @@ steps:
       - 'run'
       - 'deploy'
       - 'guidance-system'
-      - '--image=us-central1-docker.pkg.dev/$_PROJECT_ID/webdev-dockers/guidance-system:$COMMIT_SHA'
+      - '--image=us-central1-docker.pkg.dev/guidance-teacher-system-514816/webdev-dockers/guidance-system:$COMMIT_SHA'
       - '--region=us-central1'
       - '--platform=managed'
       - '--port=8080'
       - '--allow-unauthenticated'
 
 images:
-  - 'us-central1-docker.pkg.dev/$_PROJECT_ID/webdev-dockers/guidance-system:$COMMIT_SHA'
+  - 'us-central1-docker.pkg.dev/guidance-teacher-system-514816/webdev-dockers/guidance-system:$COMMIT_SHA'
 
 substitutions:
-  _PROJECT_ID: 'guidance-teacher-system'
+  _PROJECT_ID: 'guidance-teacher-system-514816'
 
 options:
   logging: CLOUD_LOGGING_ONLY
