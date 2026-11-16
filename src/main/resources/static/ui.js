@@ -630,7 +630,7 @@ try {
     form.querySelector('#resetOptionsRetry').onclick = () => void loadPasswordResetOptions(form);
     void loadPasswordResetOptions(form);
  }
- function modal(title,body,actions=''){get('uiDialog').classList.remove('account-dialog','admin-school-drawer','school-info-dialog');if(state.role==='admin'&&title.includes('โรงเรียน'))get('uiDialog').classList.add('admin-school-drawer');get('uiDialog').innerHTML=`<div class="dialog-head"><h2>${title}</h2>${btn('×','close')}</div>${body}<div class="form-actions">${actions||btn('ปิด','close')}</div>`;get('uiDialog').showModal();}
+ function modal(title,body,actions=''){get('uiDialog').classList.remove('account-dialog','admin-school-drawer','school-info-dialog','dataset-detail-dialog');if(state.role==='admin'&&title.includes('โรงเรียน'))get('uiDialog').classList.add('admin-school-drawer');get('uiDialog').innerHTML=`<div class="dialog-head"><h2>${title}</h2>${btn('×','close')}</div>${body}<div class="form-actions">${actions||btn('ปิด','close')}</div>`;get('uiDialog').showModal();}
  let returnFocus;const openModal=(...args)=>{returnFocus=document.activeElement;modal(...args);};
  function download(filename,headers,rows){const encode=v=>'"'+String(v??'').replace(/"/g,'""').replace(/^[=+@\-]/,"'$&")+'"';const csv='\ufeff'+[headers,...rows].map(r=>r.map(encode).join(',')).join('\r\n');const url=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));const a=document.createElement('a');a.href=url;a.download=filename;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}
  let month = new Date();
@@ -1631,7 +1631,7 @@ ${field(
     const school=ownSchool(),province=school.subdistrict?.district?.province?.name||'ยังไม่ระบุจังหวัด',type=school.schoolType||'ยังไม่ระบุสังกัด';
     const match=(!filters.query||school.name.toLowerCase().includes(filters.query.trim().toLowerCase()))&&(!filters.province||filters.province==='ทุกจังหวัด'||filters.province===province)&&(!filters.type||filters.type.startsWith('ทั้งหมด')||filters.type===type);
     const count=state.applicantOverview?.totalApplicants;
-    return panel(table(['ตรา','รหัสโรงเรียน','ชื่อโรงเรียน','จังหวัด','สังกัด','ผู้สมัคร (ทุกปี)','รายละเอียด'],match?[[`<span class="school-monogram">ร</span>`,esc(school.schoolCode||'—'),esc(school.name),esc(province),esc(type),Number.isInteger(count)?count:'—',btn('ดูรายละเอียด','teacher-school-applicants','btn-primary')]]:[]));
+    return panel(table(['ตรา','รหัสโรงเรียน','ชื่อโรงเรียน','จังหวัด','สังกัด','ผู้สมัคร (ทุกปี)'],match?[[`<span class="school-monogram">ร</span>`,esc(school.schoolCode||'—'),esc(school.name),esc(province),esc(type),Number.isInteger(count)?count:'—']]:[]));
  }
 
  function ownSchoolStats(){return schoolStatisticsPage();}
@@ -2096,12 +2096,13 @@ ${field(
  }
  const schoolStatsLabels={'Applied':'สมัคร','Interview Eligible':'มีสิทธิ์สอบคัดเลือก','Selected':'ผ่านการคัดเลือก','Enrolled':'ขึ้นทะเบียนเป็นนักศึกษา','Waived':'สละสิทธิ์','Not Enrolled':'ไม่ขึ้นทะเบียน'};
  function schoolStatsChart(title,items,funnel=false){
-    const max=Math.max(0,...items.map(i=>Number(i.count)||0));
+    const max=funnel?Number(items.find(i=>i.label==='Applied')?.count||0):Math.max(0,...items.map(i=>Number(i.count)||0));
     const body=items.map(i=>{
         const percent=max?Math.max(0,Math.min(100,100*i.count/max)):0;
-        return `<div style="margin:16px 0"><div class="section-caption"><span>${esc(schoolStatsLabels[i.label]||i.label)}</span><strong>${esc(i.count)} คน</strong></div><div style="height:24px;background:#e5e5e0;border-radius:4px;${funnel?'display:flex;justify-content:center;':''}" role="img" aria-label="${esc(schoolStatsLabels[i.label]||i.label)} ${esc(i.count)} คน"><div style="height:24px;width:${percent}%;background:#7a2222;${funnel?'clip-path:polygon(0 0,100% 0,93% 100%,7% 100%);':'border-radius:4px;'}"></div></div></div>`;
+        return `<div style="margin:16px 0"><div class="section-caption"><span>${esc(schoolStatsLabels[i.label]||i.label)}</span><strong>${esc(i.count)} คน</strong></div><div style="height:24px;background:#e5e5e0;border-radius:4px;overflow:hidden" role="img" aria-label="${esc(schoolStatsLabels[i.label]||i.label)} ${esc(i.count)} คน${funnel?' จากผู้สมัครทั้งหมด '+esc(max)+' คน':''}"><div style="height:24px;width:${percent}%;background:#7a2222;border-radius:4px;"></div></div></div>`;
     }).join('');
-    return panel(`<h3>${title}</h3>${body}`);
+    const note=funnel?'<p style="font-size:14px;line-height:1.6;color:#6E6862;margin:8px 0 20px">นับจากสถานะปัจจุบันของผลล่าสุดที่เผยแพร่แล้ว ไม่ใช่ประวัติการผ่านแต่ละขั้นตอน · ความยาวแท่งเทียบกับผู้สมัครทั้งหมด</p>':'';
+    return panel(`<h3>${title}</h3>${note}${body}`);
  }
  function schoolStatisticsPage(){
     const report=state.schoolStatsReport,loading=state.schoolStatsLoading,f=state.schoolStatsFilters||{},year=Number(f.year)||state.profile.activeAcademicYear;
@@ -2698,6 +2699,40 @@ ${field(
         .sort((a,b)=>(b.round.academicYear-a.round.academicYear)||(a.round.entrygroupId-b.round.entrygroupId)||(a.quota.quotaId-b.quota.quotaId));
  }
  let adminResultsRequest = 0;
+ function datasetUploadDate(value){
+    if(!value)return '—';
+    const m=String(value).match(/^(\d{4})-(\d{2})-(\d{2})[T ](\d{2}):(\d{2})/);
+    if(!m)return String(value);
+    return `${Number(m[3])}/${m[2]}/${Number(m[1])+543} ${m[4]}:${m[5]} น.`;
+ }
+ function datasetDetailsMarkup(d){
+    const g=d.program?.entryGroup||{},hasErrors=datasetHasErrors(d);
+    const item=(label,value,wide=false)=>`<div class="dataset-info-item ${wide?'dataset-info-wide':''}"><dt>${label}</dt><dd>${esc(value??'—')}</dd></div>`;
+    return `<style>
+    #uiDialog.dataset-detail-dialog{width:min(760px,calc(100vw - 32px));max-width:calc(100vw - 32px);max-height:calc(100dvh - 32px);overflow:auto;padding:24px;box-sizing:border-box;}
+    #uiDialog.dataset-detail-dialog .dialog-head{gap:16px;align-items:center;margin-bottom:20px;padding-bottom:16px;}
+    #uiDialog.dataset-detail-dialog .dialog-head h2{font-size:22px;line-height:1.5;margin:0;}
+    #uiDialog.dataset-detail-dialog .dialog-head button{flex:0 0 36px;width:36px;min-width:36px;height:36px;padding:0;}
+    #uiDialog.dataset-detail-dialog .dataset-info-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0;margin:0;}
+    #uiDialog.dataset-detail-dialog .dataset-info-item{min-width:0;padding:14px 16px;border-bottom:1px solid #E3DDD6;}
+    #uiDialog.dataset-detail-dialog .dataset-info-wide{grid-column:1/-1;background:#F7F5F2;border-radius:8px;}
+    #uiDialog.dataset-detail-dialog dt{font-size:14px;color:#6E6862;margin:0 0 6px;}
+    #uiDialog.dataset-detail-dialog dd{font-size:16px;line-height:1.6;margin:0;overflow-wrap:anywhere;color:#1C1C1E;}
+    #uiDialog.dataset-detail-dialog .dataset-counts{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:20px 0;}
+    #uiDialog.dataset-detail-dialog .dataset-count{padding:14px 16px;background:#F7F5F2;border-radius:8px;color:#6E6862;font-size:14px;}
+    #uiDialog.dataset-detail-dialog .dataset-count strong{display:block;font-size:28px;color:#7A2222;margin-top:6px;}
+    #uiDialog.dataset-detail-dialog .dataset-status{display:inline-block;padding:4px 12px;border-radius:20px;background:${hasErrors?'#FFFBEB':'#F4F4F5'};color:${hasErrors?'#D97706':'#636366'};font-size:14px;}
+    #uiDialog.dataset-detail-dialog .dataset-errors{padding:16px;background:${hasErrors?'#FFFBEB':'#F7F5F2'};border-radius:8px;}
+    #uiDialog.dataset-detail-dialog .dataset-errors h3{font-size:16px;margin:0 0 8px;color:#1C1C1E;}
+    #uiDialog.dataset-detail-dialog .dataset-errors p{margin:0;line-height:1.7;white-space:pre-wrap;overflow-wrap:anywhere;}
+    #uiDialog.dataset-detail-dialog .form-actions{margin-top:20px;padding-top:16px;justify-content:flex-end;}
+    @media(max-width:560px){#uiDialog.dataset-detail-dialog{padding:18px;}#uiDialog.dataset-detail-dialog .dataset-info-grid{grid-template-columns:1fr;}#uiDialog.dataset-detail-dialog .dialog-head h2{font-size:20px;}}
+    </style>
+    <dl class="dataset-info-grid">${item('ชื่อไฟล์',d.fileName,true)}${item('หลักสูตร',d.program?.programName)}${item('ปีการศึกษา',g.academicYear)}${item('รอบการรับสมัคร',g.entrygroupName)}${item('วันที่อัปโหลด',datasetUploadDate(d.uploadedAt))}</dl>
+    <div style="margin-top:16px"><span class="dataset-status">${esc(datasetStatusText(d))}</span></div>
+    <div class="dataset-counts"><div class="dataset-count">จำนวนรายการทั้งหมด<strong>${esc(d.totalRows??0)}</strong></div><div class="dataset-count">รายการที่พบข้อผิดพลาด<strong>${esc(d.errorRows??0)}</strong></div></div>
+    <section class="dataset-errors"><h3>รายละเอียดข้อผิดพลาด</h3><p>${esc(d.errorSummary?.trim()|| (hasErrors?'ไม่มีรายละเอียดข้อผิดพลาดเพิ่มเติม':'ไม่มีรายละเอียดข้อผิดพลาดที่บันทึกไว้'))}</p></section>`;
+ }
  function datasetHasErrors(d){return Number(d.errorRows)>0||['ERROR','ERRONEOUS','INVALID','FAILED'].includes(String(d.datasetStatus||'').toUpperCase());}
  function datasetMatches(d,f){const g=d.program?.entryGroup||{};return (!f.year||String(g.academicYear)===f.year)&&(!f.round||g.entrygroupName===f.round)&&(!f.program||String(d.program?.programId)===f.program)&&(!f.status||(f.status==='ERRONEOUS'?datasetHasErrors(d):String(d.datasetStatus||'').toUpperCase()===f.status));}
  function datasetStatusText(d){const s=String(d.datasetStatus||'').toUpperCase();return ({PUBLISHED:'เผยแพร่แล้ว',PENDING_REVIEW:'รอตรวจสอบ',UNPUBLISHED:'ยังไม่เผยแพร่',DRAFT:'ฉบับร่าง',ERROR:'ข้อมูลผิดพลาด',ERRONEOUS:'ข้อมูลผิดพลาด',INVALID:'ข้อมูลไม่ถูกต้อง',FAILED:'ไม่สำเร็จ'})[s]||d.datasetStatus||'ไม่ระบุ';}
@@ -2750,7 +2785,8 @@ ${field(
         if(generation!==loginGeneration||state.role!=='admin'||state.page!=='results')return;
         if(d?.datasetId!==id||!d.program)throw new Error('ไม่พบชุดข้อมูลนี้');
         const g=d.program.entryGroup||{};
-        openModal('รายละเอียดชุดข้อมูล (อ่านอย่างเดียว)',`<dl>${[['ชื่อไฟล์',d.fileName],['หลักสูตร',d.program.programName],['ปีการศึกษา',g.academicYear],['รอบการรับสมัคร',g.entrygroupName],['วันที่อัปโหลด',d.uploadedAt?.replace('T',' ')],['จำนวนรายการ',d.totalRows??0],['สถานะ',datasetStatusText(d)],['จำนวนรายการผิดพลาด',d.errorRows??0],['รายละเอียดข้อผิดพลาด',d.errorSummary]].map(([label,value])=>`<dt>${label}</dt><dd style="white-space:pre-wrap">${esc(value??'—')}</dd>`).join('')}</dl>`);
+        openModal('รายละเอียดชุดข้อมูล (อ่านอย่างเดียว)',datasetDetailsMarkup(d));
+        get('uiDialog').classList.add('dataset-detail-dialog');
     }catch(error){if(generation===loginGeneration&&state.role==='admin'&&state.page==='results')openModal('เปิดรายละเอียดไม่สำเร็จ',`<p role="alert">${esc(error.name==='AbortError'?'โหลดข้อมูลนานเกินไป กรุณาลองอีกครั้ง':error.message)}</p>`);}
     finally{clearTimeout(timer);button.disabled=false;}
  });
